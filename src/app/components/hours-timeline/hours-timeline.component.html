@@ -1,0 +1,9 @@
+<div *ngIf="axis === 'y'" style="width:5rem; border:2px solid blue; margin:auto; position:relative" [style.height]="(hours.length * unit) + 'px'" >
+  <div [style.height]="unit + 'px'" class="hours" *ngFor="let item of hours, let j = index">
+  {{j + 1}}</div>
+</div>
+
+<div *ngIf="axis === 'x'" style="height:5rem; border:2px solid blue; margin:auto; position:relative; display:flex" [style.width]="(hours.length * unit) + 'px'" >
+  <div [style.width]="unit + 'px'" class="hours" *ngFor="let item of hours, let j = index">
+  {{j + 1}}</div>
+</div>

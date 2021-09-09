@@ -1,0 +1,9 @@
+<div *ngIf="axis === 'y'" style="border:2px solid blue; margin:auto; position:relative" [style.height]="(timeUnits * unit) + 'px'">
+  <div *ngIf="isCreating" style="border:1px solid yellow; width:100%; position:absolute; " [style.top]="creatingTop + 'px'" [style.height]="creatingHeight + 'px'">{{creatingHeight}}</div>
+  <app-item-y *ngFor="let task of (service.tasks$ | async).get(day), trackBy: identify" class="task-y" [model]="task" [unit]="unit" [axis]="axis"></app-item-y>
+ </div>
+
+ <div *ngIf="axis === 'x'" style="border:2px solid blue; margin:auto; position:relative;height:5rem;" [style.width]="(timeUnits * unit) + 'px'">
+  <div *ngIf="isCreating" style="border:1px solid yellow; height:100%; position:absolute; " [style.left]="creatingTop + 'px'" [style.width]="creatingHeight + 'px'">{{creatingHeight}}</div>
+  <app-item-x *ngFor="let task of (service.tasks$ | async).get(day), trackBy: identify" class="task-x" [model]="task" [unit]="unit" [axis]="axis"></app-item-x>
+ </div>
