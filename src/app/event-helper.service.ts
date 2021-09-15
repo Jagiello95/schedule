@@ -26,8 +26,16 @@ export class EventHelperService {
     return event.page.x  >  event.target.getBoundingClientRect().left
   }
 
-  public isCursorLeftFromDraggedEdge(event) {
+  public isCursorLeftFromLeftEdge(event) {
     return event.page.x  <  event.target.getBoundingClientRect().left
+  }
+
+  public isCursorLeftFromRightEdge(event) {
+    return event.page.x  <  event.target.getBoundingClientRect().right
+  }
+
+  public isCursorRightFromRightEdge(event) {
+    return event.page.x  >  event.target.getBoundingClientRect().right
   }
 
   public isInsideLeftEdgeOfContainer(x) {
@@ -42,28 +50,22 @@ export class EventHelperService {
     return event.target.clientWidth - unit < 0
   }
 
-  public handlePositiveResizeTowardsLeft(event, unit) {
-    event.target.style.left = event.target.offsetLeft - unit + 'px';
-    event.target.style.width = event.target.clientWidth + unit + 'px';
-  }
-
-  public handleNegativeResizeTowardsRight(event, unit ) {
-    event.target.style.left = event.target.offsetLeft + unit + 'px';
-    event.target.style.width = event.target.clientWidth - unit + 'px';
+  public isBeingResizedOverParentWidth(event, unit) {
+    return event.target.clientWidth + event.target.offsetLeft + unit > event.target.parentElement.clientWidth
   }
 
 
-  public handlePositiveResizeTowardsRight(event) {
-    Object.assign(event.target.style, {
-      height: `100%`,
-      width: `${event.rect.width}px`,
-    })
-  }
 
   public assignDatasetValues(event, x,y) {
-    (console.log(event,x,y))
     Object.assign(event.target.dataset, { x, y })
   }
+
+  public isAvailable(num:number, arr: number[][]) {
+    return arr?.every((el: number[])=> {
+      return num < el[0] || num >= el[0] + el[1]
+    })
+  }
+  
 
   constructor() { }
 }

@@ -13,3 +13,12 @@
   display:block;
   position:absolute;
 }
+
+.placeholder {
+  height:100%;
+  width:5rem;
+  background-color:cyan;
+  position:absolute;
+  z-index:1;
+  // transition: left 0.1s linear;
+}

@@ -1,3 +1,12 @@
 .item {
+  background-color:white;
   pointer-events:none;
+  z-index:100000;
+}
+
+:host {
+  background-color:white;
+  z-index:10000;
+  height:100%;
+  width:100%;
 }

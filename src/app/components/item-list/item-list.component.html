@@ -5,5 +5,9 @@
 
  <div *ngIf="axis === 'x'" style="border:2px solid blue; margin:auto; position:relative;height:5rem;" [style.width]="(timeUnits * unit) + 'px'">
   <div *ngIf="isCreating" style="border:1px solid yellow; height:100%; position:absolute; " [style.left]="creatingTop + 'px'" [style.width]="creatingHeight + 'px'">{{creatingHeight}}</div>
-  <app-item-x *ngFor="let task of (service.tasks$ | async).get(day), trackBy: identify" class="task-x" [model]="task" [unit]="unit" [axis]="axis"></app-item-x>
- </div>
+  <app-item-x *ngFor="let task of (service.tasks$ | async).get(day), trackBy: identify" class="task-x" [model]="task" [unit]="unit" [axis]="axis" [forbiddenIndexes$]="forbiddenIndexes$"></app-item-x>
+  <div *ngIf="isPlaceholder" class="placeholder" [style.left]="draggableElement.style.left  | snapMe:unit" [style.width]="draggableElement.style.width">{{draggableElement.style.left}}</div>
+  <app-placeholder *ngFor="let item of allowedUnits" [left]="item[0] * unit" [width]="item[1] * unit">  start {{item[0]}} range {{item[1]}}</app-placeholder>
+
+
+</div>

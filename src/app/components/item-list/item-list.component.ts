@@ -3,6 +3,9 @@ import { ScheduleService } from 'src/app/schedule.service';
 import interact from 'interactjs';
 import { EventEmitter } from '@angular/core';
 import { ItemXComponent } from '../item-x/item-x.component';
+import { ItemYComponent } from '../item-y/item-y.component';
+import { map , switchMap, tap} from 'rxjs/operators';
+import { combineLatest, Observable, Subject, Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-item-list',
@@ -19,11 +22,15 @@ export class ItemListComponent implements OnInit, AfterViewInit {
   @Input() axis;
   @Input() unit;
   @Input() timeUnits
+  public allowedUnits = []
 
+  childrenSize: Subscription
+  public draggableElement;
+  public isPlaceholder: boolean = false;
+  public forbiddenIndexes$ = new Subject<number[][]>();
   public creatingTop = null;
   public creatingHeight = null;
   public isCreating = false;
-  public forbiddenIndexes = [];
   @Output()
   dropping: EventEmitter<any> = new EventEmitter();
 
@@ -32,13 +39,16 @@ export class ItemListComponent implements OnInit, AfterViewInit {
   // @HostBinding('attr.colspan') value:number = this.el.nativeElement.children.length;
 
  ngOnInit(): void {
+
   interact(this.el.nativeElement)
     .dropzone(Object.assign({}, this.options || {}))
     .on('dropactivate', event => event.target.classList.add('can-drop'))
     .on('dragenter', event => {
+      console.log(1)
+      this.draggableElement = event.relatedTarget;
       const draggableElement = event.relatedTarget;
       const dropzoneElement = event.target;
-
+      this.isPlaceholder = true;
       dropzoneElement.classList.add('can-catch');
       draggableElement.classList.add('drop-me');
 
@@ -46,6 +56,7 @@ export class ItemListComponent implements OnInit, AfterViewInit {
     .on('dragleave', event => {
       event.target.classList.remove('can-catch', 'caught-it');
       event.relatedTarget.classList.remove('drop-me');
+      this.isPlaceholder = false;
     })
     .on('drop', event => {
       // console.log('drop')
@@ -55,13 +66,16 @@ export class ItemListComponent implements OnInit, AfterViewInit {
       // event.relatedTarget.style.left = 0;
       // obj.style.left = 0;
       // event.target.appendChild(obj)
+      this.isPlaceholder = false;
       const model = (window as any).dragData;
       if (this.axis === "y") {
         this.reactToDrop({...model, start:event.relatedTarget.style.top, range:event.relatedTarget.style.height })
       } else {
-        this.reactToDrop({...model, start:event.relatedTarget.style.left, range:event.relatedTarget.style.width })
+
+        this.reactToDrop({...model, start:Math.round(event.relatedTarget.offsetLeft / this.unit) * this.unit, range:event.relatedTarget.clientWidth })
 
       }
+      
 
       if (typeof (model) === 'object') {
         this.dropping.emit(model);
@@ -113,10 +127,33 @@ reactToDrop(model: any) {
 }
 
   ngAfterViewInit(): void {
+    this.prepareForbiddenFieldsList()
   }
 
   identify(index, item){
     return item.name; 
  }
 
+ prepareForbiddenFieldsList() {
+   
+  this.items.changes.pipe(
+    map(()=> this.items.map((item: ItemXComponent) => item.sizeChange$)),
+    switchMap((items) => combineLatest(items)),
+    tap((res)=> {
+      let last = 0;
+      let allowedUnits = [];
+      const result = res.sort((a,b) => a[0]-b[0]);
+      result.forEach((el, i)=> {
+        const output = [last, el[0]-last];
+        last = el[0] + el[1] 
+        allowedUnits.push(output);
+        if(i + 1 === res.length) {
+          allowedUnits.push([last, this.timeUnits-last] )
+        }
+        // return el[0] + el[1]
+      })
+      this.allowedUnits = allowedUnits
+    })
+  ).subscribe((el)=> this.forbiddenIndexes$.next(el) )
+ }
 }
