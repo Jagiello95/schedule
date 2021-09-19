@@ -5,6 +5,7 @@ import { DragModel } from '../item.model';
 import { BehaviorSubject, forkJoin, Observable, Subject, combineLatest, zip} from 'rxjs'
 import {distinctUntilChanged, map} from 'rxjs/operators';
 import { CombineLatestOperator } from 'rxjs/internal/observable/combineLatest';
+import { ScheduleService } from 'src/app/schedule.service';
 @Component({
   selector: 'app-item-x',
   templateUrl: './item-x.component.html',
@@ -15,11 +16,21 @@ export class ItemXComponent implements OnInit, AfterViewInit {
   public start;
   public rangeChange$: BehaviorSubject<number>;
   public startChange$: BehaviorSubject<number>;
+  @Input() public index;
+  @Input() public parentId;
+  @Output() public dragStartEvent = new EventEmitter<number>();
+  @Output() public dragEndEvent = new EventEmitter<any>();
   public dragEnd$: Observable<number[]>;
+  public resizeEnd$: Subject<void>;
+  public closestRight;
+  public closestLeft;
+  public clone;
+  public originalParent;
+  
   public sizeChange$: Observable<number[]>
   @Input() model: DragModel;
 
-  
+  @Input() parentWidth;
   @Input()
   unit;
 
@@ -39,7 +50,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
   private currentlyDragged = false;
 
-  constructor(public el: ElementRef, public helper: EventHelperService, private cdRef : ChangeDetectorRef) {}
+  constructor(public el: ElementRef, public helper: EventHelperService, private cdRef : ChangeDetectorRef, private scheduleService: ScheduleService) {}
 
   @HostListener('click', ['$event'])
   public onClick(event: any): void {
@@ -50,26 +61,31 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.el.nativeElement.style.width = this.el.nativeElement.clientWidth;
+    this.el.nativeElement.style.left= this.model.start + 'px';
+    
     
   }
 
   ngOnInit(): void {
     (window as any).dragMoveListener = this.dragMoveListener.bind(this);
     (window as any).dragUnit= this.unit;
+    this.resizeEnd$ = new Subject<void>();
     this.rangeChange$ = new BehaviorSubject<number>(this.model.range);
     this.forbiddenIndexes$.subscribe((forbiddenIndexes: number[][]) => {
       this.forbiddenIndexes = forbiddenIndexes;
+      this.closestRight = this.getClosestRight(this.forbiddenIndexes?.map(el => el[0]), (this.start + this.range)/this.unit);
+      this.closestLeft = this.getClosestLeft(this.forbiddenIndexes?.map(el => el[0] + el[1]), (this.start)/this.unit);
            this.cdRef.detectChanges();
     })
 
     this.rangeChange$.subscribe((width: number)=> {
-      this.range = width / this.unit;
+      this.range = Math.round(width / this.unit) * this.unit
       this.el.nativeElement.style.width = width + 'px';
     })
   
     this.startChange$ = new BehaviorSubject<number>(this.model.start)
     this.startChange$.subscribe((left: number)=> {
-      this.start = Math.round(left / this.unit)
+      this.start = Math.round(left / this.unit) * this.unit
       this.el.nativeElement.style.left = left + 'px';
     })
 
@@ -86,17 +102,20 @@ export class ItemXComponent implements OnInit, AfterViewInit {
       axis: 'x',
       listeners: {
         move: function (event) {
+          console.log(1)
           const client = (window as any);
           const unit = (window as any).dragUnit
           let { x, y } = event.target.dataset
           x = (parseFloat(x) || 0) + event.deltaRect.left
           y = (parseFloat(y) || 0) + event.deltaRect.top
-
+          
           if (this.isLeftEdge(event)) {
             if (this.isResizeTowardsLeft(event)) {
              if (this.isCursorLeftFromLeftEdge(event)) {
                if(this.isInsideLeftEdgeOfContainer(x)) {
+                if(this.isMoreThanEdgeLeft(event)) {
                  this.handlePositiveResizeTowardsLeft(event, unit)
+                }
                 }
               }
             }
@@ -119,20 +138,24 @@ export class ItemXComponent implements OnInit, AfterViewInit {
         if(this.isRightEdge(event)) {
           if (this.isResizeTowardsLeft(event)) {
             if (this.isCursorLeftFromRightEdge(event)) {
-              if (this.isBeingResizedBelowZero(event, unit)) {
-                return;
+  
+                if (this.isBeingResizedBelowZero(event, unit)) {
+                  return;
+                }
+                this.handleNegativeResizeTowardsLeft(event, unit)
               }
-              this.handleNegativeResizeTowardsLeft(event, unit)
+              
             }
           }
 
           if (this.isResizeTowardsRight(event)) {
             if (this.isCursorRightFromRightEdge(event)) {
-              if (this.isBeingResizedOverParentWidth(event, unit)) {
-                return;
+              if (this.isLessThanEdgeRight(event)) {
+                if (this.isBeingResizedOverParentWidth(event, unit)) {
+                  return;
+                }
+                  this.handlePositiveResizeTowardsRight(event, unit)
               }
-                this.handlePositiveResizeTowardsRight(event, unit)
-            }
           }
         }
         this.assignDatasetValues(event, x,y)
@@ -158,18 +181,46 @@ export class ItemXComponent implements OnInit, AfterViewInit {
       // inertia: true,
     })
     .on('dragstart', (event) => {
+      this.dragStartEvent.emit();
       const element = event.target;
       element.dataset.model = this.model;
       (window as any).dragData = this.model;
-    })
+      // const interaction = event.interaction;
+      // if (event.currentTarget.getAttribute('clonable') != 'false') {
+      //   var original = event.currentTarget;
+      //   this.clone = event.currentTarget.cloneNode(true);
+      //   var x = this.clone.offsetLeft;
+      //   var y = this.clone.offsetTop;
+      //   this.clone.setAttribute('clonable','false');
+      //   this.clone.style.position = "absolute";
+      //   this.clone.style.left = original.offsetLeft +"px";
+      //   this.clone.style.height = original.clientHeight + "px"
+      //   this.clone.style.width = original.clientWidth + "px"
+      //   this.clone.style.top = original.offsetTop +"px";
+      //   this.clone.model = this.model;
+      //   this.originalParent = document.body
+      //   original.parentElement.appendChild(this.clone);
+      //   interaction.start({ name: 'drag' },event.interactable,this.clone);
+      // }
 
+  
+
+    })
+    .on('resizeend', (event) => {
+      this.resizeEnd$.next()
+    })
     .on('dragend', (event) => {
+      this.dragEndEvent.emit(1234567890)
       event.target.style.top = 0;
       event.target.setAttribute('data-y', 0);
       this.dragEnd$ = combineLatest([
         this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
         this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
       ])
+
+
+      // this.originalParent.removeChild(this.clone);
+
     })
 }
 
@@ -180,10 +231,15 @@ public dragMoveListener(event) {
   var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
   var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
 
-  target.style.position = 'absolute';
+  // target.style.position = 'absolute';
+  if (this.clone) {
+    this.clone.style.left = x + 'px' ;
+    this.clone.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
+    this.clone.style.top = y  +"px";
+  }
 
   if (x >= 0) {
-    if (x + target.clientWidth > target.parentElement.clientWidth) {
+    if (x + target?.clientWidth > target?.parentElement?.clientWidth) {
   
       this.startChange$.next(target.parentElement.clientWidth - target.clientWidth)
     } else {
@@ -270,9 +326,20 @@ public timeConvert(n) {
     return this.helper.isBeingResizedOverParentWidth(event, unit) 
   }
 
+  public isMoreThanEdgeLeft(event) {
+    return event.target.offsetLeft / this.unit > this.closestLeft
+  }
+
+  
+  public isLessThanEdgeRight(event) {
+    return ((event.target.offsetLeft + event.target.clientWidth) / this.unit)  < this.closestRight
+  }
+
+
 
 
   public isAvailable(index: number) {
+    return true;
     return this.helper.isAvailable(index, this.forbiddenIndexes)
   }
 
@@ -281,7 +348,7 @@ public timeConvert(n) {
     //   return;
     // }
     // console.log('can move left:', this.isAvailable((event.target.offsetLeft - unit) / unit), event.target.offsetLeft - unit)
-    console.log(event, 'event')
+
     if (!this.isAvailable((event.target.offsetLeft - unit) / unit)) {
       return;
     }
@@ -300,7 +367,7 @@ public timeConvert(n) {
     }
     this.rangeChange$.next(event.target.clientWidth + unit)
     // this.rangeChange$.next(event.rect.width)
-    event.target.style.height = '100%'
+    // event.target.style.height = '5rem'
   }
 
   public handleNegativeResizeTowardsLeft(event, unit) {
@@ -311,5 +378,23 @@ public timeConvert(n) {
   public assignDatasetValues(event, x, y) {
     return this.helper.assignDatasetValues(event, x,y)
   }
+
+  public getClosestRight(arr, i) {
+const data = arr?.filter((el)=> el >= i)
+var closest = data?.length ? data.reduce(function(prev, curr) {
+  return (Math.abs(curr - i) < Math.abs(prev - i) ? curr : prev);
+}) : this.parentWidth;
+
+return closest;
+  }
+
+  public getClosestLeft(arr, i) {
+    const data = arr?.filter((el)=> el <= i)
+    var closest = data?.length ? data.reduce(function(prev, curr) {
+      return (Math.abs(curr - i) < Math.abs(prev - i) ? curr : prev);
+    }) : 0;
+    
+    return closest;
+      }
 }
 

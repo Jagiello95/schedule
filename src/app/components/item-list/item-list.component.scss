@@ -7,15 +7,16 @@
 }
 
 .task-x {
-  border: 1px solid blue;
-  height:100%;
+  border: 1px solid lightblue;
+  background-color:rgb(118, 195, 243);
+  height:5rem;
   width:5rem;
   display:block;
   position:absolute;
 }
 
 .placeholder {
-  height:100%;
+  height:5rem;
   width:5rem;
   background-color:cyan;
   position:absolute;

@@ -1,22 +1,31 @@
-import { Component, ElementRef, Input, OnInit } from '@angular/core';
+import { Component, ElementRef, HostBinding, Input, OnInit } from '@angular/core';
 import interact from 'interactjs';
+import { Subject } from 'rxjs';
+import { ScheduleService } from 'src/app/schedule.service';
 
 @Component({
-  selector: 'app-placeholder',
+  selector: '[app-placeholder]',
   templateUrl: './placeholder.component.html',
   styleUrls: ['./placeholder.component.scss']
 })
 export class PlaceholderComponent implements OnInit {
+  public draggableElement;
+  public dragEntered = false;
+  public itemDropped$ = new Subject<void>();
   private _width: number;
   private _left: number;
   @Input() set width(width: number) {
     this._width = width
   }
 
+  @Input() day
+  
+  @Input() unit
+
+
   get width() {
     return this._width
   }
-
 
 
   @Input() set left(left: number) {
@@ -27,21 +36,26 @@ export class PlaceholderComponent implements OnInit {
     return this._left
   }
 
-  constructor(public el: ElementRef) { }
+  constructor(public el: ElementRef, public scheduleService: ScheduleService) { }
 
   ngOnInit(): void {
     interact(this.el.nativeElement)
     .dropzone(Object.assign({}, {} || {}))
     .on('dropactivate', event => event.target.classList.add('can-drop'))
     .on('dragenter', event => {
-      console.log(event)
+      this.dragEntered = true;
       const draggableElement = event.relatedTarget;
+      // console.log(draggableElement)
+      this.draggableElement = draggableElement;
       const dropzoneElement = event.target;
       dropzoneElement.classList.add('can-catch');
       draggableElement.classList.add('drop-me');
 
+
     })
     .on('dragleave', event => {
+
+      this.dragEntered = false;
       event.target.classList.remove('can-catch', 'caught-it');
       event.relatedTarget.classList.remove('drop-me');
     })
@@ -54,7 +68,8 @@ export class PlaceholderComponent implements OnInit {
       // obj.style.left = 0;
       // event.target.appendChild(obj)
       const model = (window as any).dragData;
-    
+      this.scheduleService.placeholderDrop$.next();
+      this.reactToDrop({...model, start:Math.round(event.relatedTarget.offsetLeft / this.unit) * this.unit, range:event.relatedTarget.clientWidth })
     })
     .on('dropdeactivate', event => {
       event.target.classList.remove('can-drop');
@@ -73,9 +88,12 @@ export class PlaceholderComponent implements OnInit {
 
     .on('mouseup', event => {
 
-      }
-    
-    )
+      })
+}
+reactToDrop(model: any) {
+  this.scheduleService.changeTasks(model.current, this.day, model);
+  this.itemDropped$.next()
+  
 }
 
 }

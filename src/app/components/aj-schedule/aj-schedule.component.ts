@@ -7,7 +7,8 @@ import { ScheduleService } from 'src/app/schedule.service';
   styleUrls: ['./aj-schedule.component.scss']
 })
 export class AjScheduleComponent implements OnInit {
-  public timeUnits = 24;
+  public timeUnits = this.service.timeUnits;
+  public rooms =  new Array(this.service.roomsAmount)
   title = 'schedule';
   private _unit: number;
   @Input() axis = "x"

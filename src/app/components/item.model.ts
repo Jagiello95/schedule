@@ -3,5 +3,7 @@ export interface DragModel {
   name: string,
   start: number,
   range: number,
+  index: number,
+  id: string
 
 }

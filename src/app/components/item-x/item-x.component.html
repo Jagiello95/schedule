@@ -1,5 +1,13 @@
 <div class="item" >
-  start: {{start}} 
-  range: {{range}}
-  {{forbiddenIndexes | json}}
+  <small style="color:blue">{{model.id}}</small>
+  <br>
+  <small>{{parentId}}</small>
+  <br>
+<small>{{start / unit + 1}} -
+  {{(start + range) / unit + 1}}</small>
+<br>
+<!-- {{start / unit + 1}} -
+{{(start + range) / unit + 1}}
+Id: {{model.id}} -->
+
   </div>
