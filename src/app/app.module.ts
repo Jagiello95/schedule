@@ -16,6 +16,8 @@ import { ScheduleService } from './schedule.service';
 import { AjScheduleComponent } from './components/aj-schedule/aj-schedule.component';
 import { HoursTimelineComponent } from './components/hours-timeline/hours-timeline.component';
 import { ItemXComponent } from './components/item-x/item-x.component';
+import { SnapMePipe } from './components/utils/snap-me.pipe';
+import { PlaceholderComponent } from './components/placeholder/placeholder.component';
 
 @NgModule({
   declarations: [
@@ -28,7 +30,9 @@ import { ItemXComponent } from './components/item-x/item-x.component';
     ResizableDraggableComponent,
     AjScheduleComponent,
     HoursTimelineComponent,
-    ItemXComponent
+    ItemXComponent,
+    SnapMePipe,
+    PlaceholderComponent
   ],
   imports: [
     DragDropModule,

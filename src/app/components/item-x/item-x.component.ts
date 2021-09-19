@@ -1,13 +1,22 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { EventHelperService } from 'src/app/event-helper.service';
 import { DragModel } from '../item.model';
+import { BehaviorSubject, forkJoin, Observable, Subject, combineLatest, zip} from 'rxjs'
+import {distinctUntilChanged, map} from 'rxjs/operators';
+import { CombineLatestOperator } from 'rxjs/internal/observable/combineLatest';
 @Component({
   selector: 'app-item-x',
   templateUrl: './item-x.component.html',
   styleUrls: ['./item-x.component.scss']
 })
 export class ItemXComponent implements OnInit, AfterViewInit {
+  public range;
+  public start;
+  public rangeChange$: BehaviorSubject<number>;
+  public startChange$: BehaviorSubject<number>;
+  public dragEnd$: Observable<number[]>;
+  public sizeChange$: Observable<number[]>
   @Input() model: DragModel;
 
   
@@ -17,6 +26,10 @@ export class ItemXComponent implements OnInit, AfterViewInit {
   @Input()
   axis;
 
+  @Input()
+  forbiddenIndexes$;
+
+  public forbiddenIndexes;
 
   @Input()
   options: any;
@@ -26,7 +39,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
   private currentlyDragged = false;
 
-  constructor(public el: ElementRef, public helper: EventHelperService) {}
+  constructor(public el: ElementRef, public helper: EventHelperService, private cdRef : ChangeDetectorRef) {}
 
   @HostListener('click', ['$event'])
   public onClick(event: any): void {
@@ -37,12 +50,34 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.el.nativeElement.style.width = this.el.nativeElement.clientWidth;
+    
   }
 
   ngOnInit(): void {
     (window as any).dragMoveListener = this.dragMoveListener.bind(this);
     (window as any).dragUnit= this.unit;
+    this.rangeChange$ = new BehaviorSubject<number>(this.model.range);
+    this.forbiddenIndexes$.subscribe((forbiddenIndexes: number[][]) => {
+      this.forbiddenIndexes = forbiddenIndexes;
+           this.cdRef.detectChanges();
+    })
 
+    this.rangeChange$.subscribe((width: number)=> {
+      this.range = width / this.unit;
+      this.el.nativeElement.style.width = width + 'px';
+    })
+  
+    this.startChange$ = new BehaviorSubject<number>(this.model.start)
+    this.startChange$.subscribe((left: number)=> {
+      this.start = Math.round(left / this.unit)
+      this.el.nativeElement.style.left = left + 'px';
+    })
+
+    this.sizeChange$ = combineLatest([
+      this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
+      this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
+    ])
+    // this.sizeChange$.subscribe(console.log)
     this.initValues()
 
     interact(this.el.nativeElement)
@@ -59,7 +94,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
           if (this.isLeftEdge(event)) {
             if (this.isResizeTowardsLeft(event)) {
-             if (this.isCursorLeftFromDraggedEdge(event)) {
+             if (this.isCursorLeftFromLeftEdge(event)) {
                if(this.isInsideLeftEdgeOfContainer(x)) {
                  this.handlePositiveResizeTowardsLeft(event, unit)
                 }
@@ -81,9 +116,23 @@ export class ItemXComponent implements OnInit, AfterViewInit {
           
         }
 
-        if (this.isRightEdge(event)) {
-          if (this.isResizeBeforeRightEdge(event)) {
-            this.handlePositiveResizeTowardsRight(event)
+        if(this.isRightEdge(event)) {
+          if (this.isResizeTowardsLeft(event)) {
+            if (this.isCursorLeftFromRightEdge(event)) {
+              if (this.isBeingResizedBelowZero(event, unit)) {
+                return;
+              }
+              this.handleNegativeResizeTowardsLeft(event, unit)
+            }
+          }
+
+          if (this.isResizeTowardsRight(event)) {
+            if (this.isCursorRightFromRightEdge(event)) {
+              if (this.isBeingResizedOverParentWidth(event, unit)) {
+                return;
+              }
+                this.handlePositiveResizeTowardsRight(event, unit)
+            }
           }
         }
         this.assignDatasetValues(event, x,y)
@@ -116,7 +165,11 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
     .on('dragend', (event) => {
       event.target.style.top = 0;
-      event.target.setAttribute('data-y', 0)
+      event.target.setAttribute('data-y', 0);
+      this.dragEnd$ = combineLatest([
+        this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
+        this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
+      ])
     })
 }
 
@@ -128,17 +181,19 @@ public dragMoveListener(event) {
   var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
 
   target.style.position = 'absolute';
-  console.log(this.model)
+
   if (x >= 0) {
     if (x + target.clientWidth > target.parentElement.clientWidth) {
-
-      target.style.left = target.parentElement.clientWidth - target.clientWidth + 'px'
+  
+      this.startChange$.next(target.parentElement.clientWidth - target.clientWidth)
     } else {
-      target.style.left = Math.round(x/60) * 60 + 'px'
+      // this.startChange$.next(Math.round(x/this.unit) * this.unit)
+      this.startChange$.next(x)
     }
   } else {
-    target.style.left = 0
+    this.startChange$.next(0)
   }
+  
 
   target.style.top= y + 'px'
   target.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
@@ -183,8 +238,20 @@ public timeConvert(n) {
     return this.helper.isResizeTowardsLeft(event);
   }
 
-  public isCursorLeftFromDraggedEdge(event) {
-    return this.helper.isCursorLeftFromDraggedEdge(event)
+  public isResizeTowardsRight(event) {
+    return this.helper.isResizeTowardsRight(event)
+  }
+
+  public isCursorLeftFromLeftEdge(event) {
+    return this.helper.isCursorLeftFromLeftEdge(event)
+  }
+
+  public isCursorLeftFromRightEdge(event) {
+    return this.helper.isCursorLeftFromRightEdge(event)
+  }
+
+  public isCursorRightFromRightEdge(event) {
+    return this.helper.isCursorRightFromRightEdge(event)
   }
 
   public isInsideLeftEdgeOfContainer(param) {
@@ -199,20 +266,46 @@ public timeConvert(n) {
     return this.helper.isBeingResizedBelowZero(event, unit) 
   }
 
-  public isResizeTowardsRight(event) {
-    return this.helper.isResizeTowardsRight(event)
+  public isBeingResizedOverParentWidth(event, unit) {
+    return this.helper.isBeingResizedOverParentWidth(event, unit) 
+  }
+
+
+
+  public isAvailable(index: number) {
+    return this.helper.isAvailable(index, this.forbiddenIndexes)
   }
 
   public handlePositiveResizeTowardsLeft(event, unit) {
-    return this.helper.handlePositiveResizeTowardsLeft(event, unit)
+    // if (!this.isAvailable((event.target.offsetLeft - unit) / unit)) {
+    //   return;
+    // }
+    // console.log('can move left:', this.isAvailable((event.target.offsetLeft - unit) / unit), event.target.offsetLeft - unit)
+    console.log(event, 'event')
+    if (!this.isAvailable((event.target.offsetLeft - unit) / unit)) {
+      return;
+    }
+    this.startChange$.next(event.target.offsetLeft - unit)
+    this.rangeChange$.next(event.target.clientWidth + unit)
   }
 
-  public handleNegativeResizeTowardsRight(event, unit) {
-    return this.helper.handleNegativeResizeTowardsRight(event, unit)
+  public handleNegativeResizeTowardsRight(event, unit ) {
+    this.startChange$.next(event.target.offsetLeft + unit)
+    this.rangeChange$.next(event.target.clientWidth - unit)
   }
 
-  public handlePositiveResizeTowardsRight(event) {
-    return this.helper.handlePositiveResizeTowardsRight(event)
+  public handlePositiveResizeTowardsRight(event, unit) {
+    if (!this.isAvailable(((event.target.offsetLeft + event.target.clientWidth + this.unit) - unit) / unit)) {
+      return;
+    }
+    this.rangeChange$.next(event.target.clientWidth + unit)
+    // this.rangeChange$.next(event.rect.width)
+    event.target.style.height = '100%'
+  }
+
+  public handleNegativeResizeTowardsLeft(event, unit) {
+    this.rangeChange$.next(event.target.clientWidth - unit)
+    // console.log('hello')
   }
 
   public assignDatasetValues(event, x, y) {
