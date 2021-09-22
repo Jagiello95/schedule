@@ -13,7 +13,8 @@ export class HoursTimelineComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
-    this.hours = new Array(this.timeUnits).fill(1);
+    this.hours = this.getDates(new Date(), new Date(new Date().setDate(new Date().getDate() + this.timeUnits)))
+    console.log(this.hours)
   }
 
   public timeConvert(n) {
@@ -24,5 +25,16 @@ export class HoursTimelineComponent implements OnInit {
     var rminutes = Math.round(minutes);
     return rhours + '.' + rminutes;
     }
+
+    public getDates(startDate, stopDate) {
+      console.log(startDate, stopDate)
+      var dateArray = new Array();
+      var currentDate = new Date(startDate).setDate(new Date(startDate).getDate() - 1);
+      while (currentDate <= stopDate) {
+          dateArray.push(currentDate);
+          currentDate = new Date(currentDate).setDate(new Date(currentDate).getDate() + 1);
+      }
+      return dateArray;
+  }
 
 }

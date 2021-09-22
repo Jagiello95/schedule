@@ -3,9 +3,12 @@
   {{j + 1}}</div>
 </div>
 <div style="display:flex">
-  <div style="width:5rem; height:100%;"></div>
-<div *ngIf="axis === 'x'" style="height:5rem; border:2px solid blue; position:relative; display:flex" [style.width]="(hours.length * unit) + 'px'" >
+  <!-- <div style="width:5rem; height:100%; border-left:1px solid transparent"></div> -->
+<div *ngIf="axis === 'x'" style="height:5rem; position:relative; display:flex" [style.width]="(hours.length * unit) + 'px'" >
   <div [style.width]="unit + 'px'" class="hours" *ngFor="let item of hours, let j = index">
-  {{j + 1}}</div>
+
+  <span *ngIf="j">{{item | date: 'dd/MM'}}</span>
+
+</div>
 </div>
 </div>

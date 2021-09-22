@@ -46,8 +46,8 @@ export class EventHelperService {
     return event.velocity.x > unit
   }
 
-  public isBeingResizedBelowZero(event, unit) {
-    return event.target.clientWidth - unit < 0
+  public isBeingResizedBelowUnit(event, unit) {
+    return event.target.clientWidth - unit < unit
   }
 
   public isBeingResizedOverParentWidth(event, unit) {

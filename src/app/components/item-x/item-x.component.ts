@@ -26,7 +26,10 @@ export class ItemXComponent implements OnInit, AfterViewInit {
   public closestLeft;
   public clone;
   public originalParent;
+  public originalLeft;
+  public originalWidth;
   
+  public originalDay;
   public sizeChange$: Observable<number[]>
   @Input() model: DragModel;
 
@@ -102,7 +105,6 @@ export class ItemXComponent implements OnInit, AfterViewInit {
       axis: 'x',
       listeners: {
         move: function (event) {
-          console.log(1)
           const client = (window as any);
           const unit = (window as any).dragUnit
           let { x, y } = event.target.dataset
@@ -121,7 +123,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
             }
             
             if (this.isMovedByUnit(event, unit)) {
-              if (this.isBeingResizedBelowZero(event, unit)) {
+              if (this.isBeingResizedBelowUnit(event, unit)) {
                 return;
               }
 
@@ -139,7 +141,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
           if (this.isResizeTowardsLeft(event)) {
             if (this.isCursorLeftFromRightEdge(event)) {
   
-                if (this.isBeingResizedBelowZero(event, unit)) {
+                if (this.isBeingResizedBelowUnit(event, unit)) {
                   return;
                 }
                 this.handleNegativeResizeTowardsLeft(event, unit)
@@ -174,34 +176,42 @@ export class ItemXComponent implements OnInit, AfterViewInit {
     })
 
     .on(['resizestart', 'resizemove', 'resizeend'], (event) => {
-      this.model = {...this.model, range: this.el.nativeElement.style.width}
+      this.model = {...this.model, range: this.el.nativeElement.clientWidth}
     })
     .draggable({
       listeners: { move: (window as any).dragMoveListener },
       // inertia: true,
     })
     .on('dragstart', (event) => {
-      this.dragStartEvent.emit();
+
+
       const element = event.target;
       element.dataset.model = this.model;
       (window as any).dragData = this.model;
-      // const interaction = event.interaction;
-      // if (event.currentTarget.getAttribute('clonable') != 'false') {
-      //   var original = event.currentTarget;
-      //   this.clone = event.currentTarget.cloneNode(true);
-      //   var x = this.clone.offsetLeft;
-      //   var y = this.clone.offsetTop;
-      //   this.clone.setAttribute('clonable','false');
-      //   this.clone.style.position = "absolute";
-      //   this.clone.style.left = original.offsetLeft +"px";
-      //   this.clone.style.height = original.clientHeight + "px"
-      //   this.clone.style.width = original.clientWidth + "px"
-      //   this.clone.style.top = original.offsetTop +"px";
-      //   this.clone.model = this.model;
-      //   this.originalParent = document.body
-      //   original.parentElement.appendChild(this.clone);
-      //   interaction.start({ name: 'drag' },event.interactable,this.clone);
-      // }
+      // element.parentElement.removeChild(element)
+      const interaction = event.interaction;
+      if (event.currentTarget.getAttribute('clonable') != 'false') {
+        var original = event.currentTarget;
+        this.originalLeft = original.offsetLeft;
+        this.originalWidth = original.clientWidth;
+        this.clone = event.currentTarget.cloneNode(true);
+        var x = this.clone.offsetLeft;
+        var y = this.clone.offsetTop;
+        this.clone.setAttribute('clonable','false');
+        this.clone.style.position = "absolute";
+        this.clone.style.left = original.offsetLeft +"px";
+        this.clone.style.height = original.clientHeight + "px"
+        this.clone.style.width = original.clientWidth + "px"
+        this.clone.style.top = original.offsetTop +"px";
+        this.clone.style['z-index'] = 20
+        this.clone.model = this.model;
+        this.originalParent = document.body
+        // original.parentElement.removeChild(event.currentTarget)
+        original.parentElement.appendChild(this.clone);
+        interaction.start({ name: 'drag' },event.interactable,this.clone);
+        this.dragStartEvent.emit();
+        console.log(this.model)
+      }
 
   
 
@@ -210,6 +220,8 @@ export class ItemXComponent implements OnInit, AfterViewInit {
       this.resizeEnd$.next()
     })
     .on('dragend', (event) => {
+
+
       this.dragEndEvent.emit(1234567890)
       event.target.style.top = 0;
       event.target.setAttribute('data-y', 0);
@@ -218,8 +230,18 @@ export class ItemXComponent implements OnInit, AfterViewInit {
         this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
       ])
 
-
-      // this.originalParent.removeChild(this.clone);
+      if (!event.target.getAttribute('in-placeholder')) {
+        this.clone.classList.add('animated')
+        this.clone.style.left = this.originalLeft + 'px';
+        setTimeout(()=> {
+          console.log('HERE', this.clone.model)
+          this.scheduleService.changeTasks(this.clone.model.current, this.clone.model.current, {...this.clone.model})
+          if (this.clone.parentElement) {
+            this.clone.parentElement.removeChild(this.clone);
+          }
+        }, 300)
+      }
+     
 
     })
 }
@@ -318,8 +340,8 @@ public timeConvert(n) {
     return this.helper.isMovedByUnit(event, unit) 
   }
 
-  public isBeingResizedBelowZero(event, unit) {
-    return this.helper.isBeingResizedBelowZero(event, unit) 
+  public isBeingResizedBelowUnit(event, unit) {
+    return this.helper.isBeingResizedBelowUnit(event, unit) 
   }
 
   public isBeingResizedOverParentWidth(event, unit) {

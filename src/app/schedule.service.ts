@@ -9,20 +9,21 @@ export class ScheduleService implements OnInit {
   public placeholderDrop$ = new Subject<void> ();
   public tasks = new Map();
   public roomsAmount = 20;
-  public timeUnits = 80;
+  public timeUnits = 30;
+  public skew = '15deg'
+  public colors$ = new BehaviorSubject(["lightgoldenrodyellow", "lightcoral", "lightblue", "lightsalmon", "lightseagreen", "lightyellow"])
   tasks$: Subject<any> = new BehaviorSubject<any>(this.tasks);
 
 
 
   changeTasks(id, id2, task: DragModel) {
+    console.log(id, id2, task)
     if (id === id2) {
-      this.tasks.get(id2).splice(task.index, 1).push(task)
+      this.tasks.get(id2).push(task)
       return;
     }
-    this.tasks.get(id).splice(task.index, 1);
+    // this.tasks.get(id).splice(task.index, 1);
     this.tasks.get(id2).push({...task, current: id2, index: this.tasks.get(id2).length});
-    // this.tasks.set(id, currentArr.splice(task.index, 1))
-    // this.tasks.set(id2, [...newArr, {...task, current: id2}] )
   }
 
   addItem(height: number, top: number, day: number) {
@@ -36,7 +37,6 @@ export class ScheduleService implements OnInit {
         i, this.returnArr(i)
       )
     }
-    console.log(1, this.tasks.get(1))
   }
 
   public ngOnInit() {

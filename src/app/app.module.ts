@@ -18,6 +18,7 @@ import { HoursTimelineComponent } from './components/hours-timeline/hours-timeli
 import { ItemXComponent } from './components/item-x/item-x.component';
 import { SnapMePipe } from './components/utils/snap-me.pipe';
 import { PlaceholderComponent } from './components/placeholder/placeholder.component';
+import { BendMePipe } from './components/utils/bend-me.pipe';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { PlaceholderComponent } from './components/placeholder/placeholder.compo
     HoursTimelineComponent,
     ItemXComponent,
     SnapMePipe,
+    BendMePipe,
     PlaceholderComponent
   ],
   imports: [

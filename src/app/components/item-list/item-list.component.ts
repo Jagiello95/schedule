@@ -25,6 +25,8 @@ export class ItemListComponent implements OnInit, AfterViewInit {
   @Input() timeUnits
   public allowedUnits = [];
   public currentItems;
+  public color$ = this.service.colors$.pipe(map((el: string[])=> el[el.length * Math.random() | 0]));
+  public skew = this.service.skew;
 
   childrenSize: Subscription
   public draggableElement;
@@ -172,7 +174,7 @@ reactToDrop(model: any) {
 }
 
  onItemDragStart(i) {
-  //  this.service.deleteItem(i, this.day)
+   this.service.deleteItem(i, this.day)
   //  this.prepareForbiddenFieldsList();
  }
 
