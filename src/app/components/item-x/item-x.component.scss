@@ -1,20 +1,14 @@
-.item {
-  // background-color: white;
-  text-align: center;
-  pointer-events: none;
-  z-index: 15;
-  transform: skew(15deg);
-}
-
 :host {
   z-index: 10;
   height: 5rem;
-  // width:5rem;
-  // border: 1px solid lightblue;
   box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px;
-  // background-color: rgb(118, 195, 243);
-  height: 5rem;
   display: block;
   position: absolute;
   transform: skew(-15deg) translateX(30px);
+  .item {
+    text-align: center;
+    pointer-events: none;
+    z-index: 15;
+    transform: skew(15deg);
+  }
 }

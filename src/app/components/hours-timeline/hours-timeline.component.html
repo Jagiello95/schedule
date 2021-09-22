@@ -1,14 +1,14 @@
-<div *ngIf="axis === 'y'" style="width:5rem; border:2px solid blue; margin:auto; position:relative" [style.height]="(hours.length * unit) + 'px'" >
-  <div [style.height]="unit + 'px'" class="hours" *ngFor="let item of hours, let j = index">
-  {{j + 1}}</div>
-</div>
-<div style="display:flex">
-  <!-- <div style="width:5rem; height:100%; border-left:1px solid transparent"></div> -->
-<div *ngIf="axis === 'x'" style="height:5rem; position:relative; display:flex" [style.width]="(hours.length * unit) + 'px'" >
-  <div [style.width]="unit + 'px'" class="hours" *ngFor="let item of hours, let j = index">
-
-  <span *ngIf="j">{{item | date: 'dd/MM'}}</span>
-
-</div>
-</div>
+<div class="y-units-container">
+  <div 
+  *ngIf="axis === 'x'" 
+  class="y-units"
+  [style.height.rem]="5" 
+  [style.width.px]="hours.length * unit">
+    <div 
+    *ngFor="let item of hours, let j = index"
+    class="y-unit" 
+    [style.width.px]="unit">
+      <span *ngIf="j">{{item | date: 'dd/MM'}}</span>
+    </div>
+  </div>
 </div>

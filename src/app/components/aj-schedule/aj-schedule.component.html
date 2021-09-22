@@ -1,18 +1,8 @@
-<div [ngClass]="{'schedule-container-x': axis === 'x', 'schedule-container-y' : axis === 'y' }" style="margin-left:5rem; margin-top:5rem;" [style.width]="unit * timeUnits + 'px'">
-
+<div
+class="schedule-container-x"
+[style.width.px]="unit * timeUnits">
     <div class="schedule-grid-container">
-    <app-hours-timeline [unit]="unit" [timeUnits]="timeUnits" [axis]="axis"  ></app-hours-timeline>
-    
-    <app-item-list  *ngFor="let room of rooms; let i = index" [unit]="unit" [day]="i" [timeUnits]="timeUnits" [axis]="axis" [id]="'Room' + i"></app-item-list>
+        <app-hours-timeline [unit]="unit" [timeUnits]="timeUnits" [axis]="axis"></app-hours-timeline>
+        <app-item-list  *ngFor="let room of rooms; let i = index" [unit]="unit" [day]="i" [timeUnits]="timeUnits" [axis]="axis" [id]="'Room' + i"></app-item-list>
+    </div>
 </div>
-    <!-- <app-item-list [unit]="unit" [day]="2" [timeUnits]="timeUnits" [axis]="axis" id="Room 2"></app-item-list>
-    <app-item-list [unit]="unit" [day]="3" [timeUnits]="timeUnits" [axis]="axis" id="Room 3"></app-item-list>
-    <app-item-list [unit]="unit" [day]="4" [timeUnits]="timeUnits" [axis]="axis" id="Room 4"></app-item-list>
-    <app-item-list [unit]="unit" [day]="5" [timeUnits]="timeUnits" [axis]="axis" id="Room 5"></app-item-list>
-    <app-item-list [unit]="unit" [day]="6" [timeUnits]="timeUnits" [axis]="axis" id="Room 6"></app-item-list>
-    <app-item-list [unit]="unit" [day]="7" [timeUnits]="timeUnits" [axis]="axis" id="Room 7"></app-item-list>
-    <app-item-list [unit]="unit" [day]="8" [timeUnits]="timeUnits" [axis]="axis" id="Room 8"></app-item-list> -->
-
-</div>
-
-{{unit}}

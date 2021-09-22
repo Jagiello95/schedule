@@ -1,21 +1,11 @@
-.task-y {
-  border: 1px solid blue;
-  height: 5rem;
-  width: 100%;
-  display: block;
-  position: absolute;
-}
-
-.task-x {
-  // transform: skew(-20deg);
+.item-list-container {
+  display: flex;
+  border-bottom: 1px solid lightgray;
 }
 
 .placeholder {
   height: 5rem;
-
-  // transition: left 0.1s linear;
   position: relative;
-  height: 5rem;
 }
 
 .animated {
@@ -28,6 +18,7 @@
 
 .room-id {
   position: absolute;
+  left: -1px;
   height: 5rem;
   top: -1px;
   border: 1px solid lightgray;

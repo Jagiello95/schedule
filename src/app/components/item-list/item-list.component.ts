@@ -33,6 +33,7 @@ export class ItemListComponent implements OnInit, AfterViewInit {
   public isPlaceholder: boolean = false;
   public forbiddenIndexes$ = new Subject<number[][]>();
   public creatingTop = null;
+  public resizeSub: Subscription;
   public creatingHeight = null;
   public isCreating = false;
   @Output()
@@ -110,25 +111,25 @@ reactToDrop(model: any) {
   ngAfterViewInit(): void {
     this.prepareForbiddenFieldsList();
     this.items.changes.pipe(tap((items)=> {
+      console.log('change')
       this.prepareForbiddenFieldsList();
       this.currentItems = items;
-
-      combineLatest(this.items.map((item)=> item.resizeEnd$)).subscribe(
+      this.resizeSub && this.resizeSub.unsubscribe();
+      this.resizeSub = combineLatest(this.items.map((item)=> item.resizeEnd$)).subscribe(
         () => {
           this.prepareForbiddenFieldsList();
         }
       )
     })).subscribe();
 
-    combineLatest(this.items.map((item)=> item.resizeEnd$)).subscribe(
+    this.resizeSub = combineLatest(this.items.map((item)=> item.resizeEnd$)).subscribe(
       () => {
         this.prepareForbiddenFieldsList();
       }
     )
   }
 
-  identify(index, item){
-    // console.log(item)
+  identify(_index, item){
     return item.name
  }
 

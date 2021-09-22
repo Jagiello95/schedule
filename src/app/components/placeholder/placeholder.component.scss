@@ -2,9 +2,14 @@
   display: block;
   width: max-content;
   height: max-content;
-  // border: 2px solid red !important;
-}
+  transform: skew(-15deg) translateX(30px);
+  height: 5rem;
+  position: absolute;
 
-.hovered {
-  // border: 2px solid red !important;
+  .placeholder {
+    opacity: 0.5;
+    position: absolute;
+    height: 5rem;
+    background-color: lightgray;
+  }
 }

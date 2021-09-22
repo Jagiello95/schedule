@@ -1,9 +1,20 @@
-.hours {
+.y-units-container {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border-width: 1px 0px 1px 0px;
-  border-style: solid;
-  border-color: lightgray;
-  // border-right: 1px solid transparent;
+
+  .y-units {
+    display: flex;
+    position: relative;
+
+    .y-unit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-width: 1px 0px 1px 0px;
+      border-style: solid;
+      border-color: lightgray;
+      // &:first-of-type {
+      //   border-left: 0.5rem solid transparent;
+      // }
+    }
+  }
 }

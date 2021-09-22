@@ -10,6 +10,7 @@ export class ScheduleService implements OnInit {
   public tasks = new Map();
   public roomsAmount = 20;
   public timeUnits = 30;
+  public itemHeight = 3;
   public skew = '15deg'
   public colors$ = new BehaviorSubject(["lightgoldenrodyellow", "lightcoral", "lightblue", "lightsalmon", "lightseagreen", "lightyellow"])
   tasks$: Subject<any> = new BehaviorSubject<any>(this.tasks);
@@ -17,7 +18,6 @@ export class ScheduleService implements OnInit {
 
 
   changeTasks(id, id2, task: DragModel) {
-    console.log(id, id2, task)
     if (id === id2) {
       this.tasks.get(id2).push(task)
       return;

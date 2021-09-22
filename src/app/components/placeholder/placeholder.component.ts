@@ -65,21 +65,11 @@ export class PlaceholderComponent implements OnInit {
       event.relatedTarget.classList.remove('drop-me');
     })
     .on('drop', event => {
-
-      console.log('drop')
-      // console.log('drop')
-      // console.log('drop1', event.target, event.relatedTarget)
-      // event.relatedTarget.parentNode.removeChild(event.relatedTarget)
-      // event.target.appendChild(event.relatedTarget)
-      // event.relatedTarget.style.left = 0;
-      // obj.style.left = 0;
-      // event.target.appendChild(obj)
       const model = (window as any).dragData;
 
       this.dragEntered = false;
       if (this.placeholder) {
         event.relatedTarget.setAttribute('in-placeholder', true)
-        console.log(this.placeholder)
       this.scheduleService.placeholderDrop$.next();
         const left =  this.placeholder.nativeElement.offsetLeft + this.el.nativeElement.offsetLeft;
         const width = this.placeholder.nativeElement.clientWidth;
@@ -109,7 +99,6 @@ export class PlaceholderComponent implements OnInit {
       })
 }
 reactToDrop(model: any) {
-  console.log(model)
   this.scheduleService.changeTasks(model.current, this.day, model);
   this.itemDropped$.next()
   

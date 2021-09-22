@@ -175,7 +175,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
       ],
     })
 
-    .on(['resizestart', 'resizemove', 'resizeend'], (event) => {
+    .on(['resizeend'], (event) => {
       this.model = {...this.model, range: this.el.nativeElement.clientWidth}
     })
     .draggable({
@@ -195,8 +195,6 @@ export class ItemXComponent implements OnInit, AfterViewInit {
         this.originalLeft = original.offsetLeft;
         this.originalWidth = original.clientWidth;
         this.clone = event.currentTarget.cloneNode(true);
-        var x = this.clone.offsetLeft;
-        var y = this.clone.offsetTop;
         this.clone.setAttribute('clonable','false');
         this.clone.style.position = "absolute";
         this.clone.style.left = original.offsetLeft +"px";
@@ -210,7 +208,6 @@ export class ItemXComponent implements OnInit, AfterViewInit {
         original.parentElement.appendChild(this.clone);
         interaction.start({ name: 'drag' },event.interactable,this.clone);
         this.dragStartEvent.emit();
-        console.log(this.model)
       }
 
   
@@ -234,7 +231,6 @@ export class ItemXComponent implements OnInit, AfterViewInit {
         this.clone.classList.add('animated')
         this.clone.style.left = this.originalLeft + 'px';
         setTimeout(()=> {
-          console.log('HERE', this.clone.model)
           this.scheduleService.changeTasks(this.clone.model.current, this.clone.model.current, {...this.clone.model})
           if (this.clone.parentElement) {
             this.clone.parentElement.removeChild(this.clone);

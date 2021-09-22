@@ -1,11 +1,5 @@
-<div style="display:flex; border-bottom:1px solid lightgray;">
-<!-- <div style="display:flex; align-items:center; justify-content:center; width:5rem; border:1px solid lightgray;">{{id}}</div> -->
-<div *ngIf="axis === 'y'" style="margin:auto; position:relative" [style.height]="(timeUnits * unit) + 'px'">
-  <!-- <div *ngIf="isCreating" style="border:1px solid yellow; width:100%; position:absolute; " [style.top]="creatingTop + 'px'" [style.height]="creatingHeight + 'px'">{{creatingHeight}}</div> -->
-  <app-item-y *ngFor="let task of (service.tasks$ | async).get(day), trackBy: identify" class="task-y" [model]="task" [unit]="unit" [axis]="axis"></app-item-y>
- </div>
- <div *ngIf="axis === 'x'" class="placeholder" [style.width]="(timeUnits * unit) + 'px'">
-  <!-- <div *ngIf="isCreating" style="border:1px solid yellow; height:100%; position:absolute; " [style.left]="creatingTop + 'px'" [style.width]="creatingHeight + 'px'">{{creatingHeight}}</div> -->
+<div class="item-list-container">
+ <div *ngIf="axis === 'x'" class="placeholder" [style.width.px]="timeUnits * unit">
   <app-item-x 
   *ngFor="let task of (service.tasks$ | async).get(day); let i = index;trackBy:identify" 
   class="task-x"
@@ -18,8 +12,17 @@
   [parentId]="id"   
   (dragEndEvent)="onItemDragEnd($event)" 
   (dragStartEvent)="onItemDragStart(i)"></app-item-x>
-  <div class="room-id" [style.left]=" - 1 + 'px'" [style.width]="unit + 'px'" [style.border-left-color]="color$ | async">{{id}}</div>
-  <div *ngIf="isPlaceholder" class="placeholder" [style.left]="draggableElement.style.left  | snapMe:unit" [style.width]="draggableElement.style.width">{{draggableElement.style.left}}</div>
-  <div style="height:5rem;  position:absolute; " [style.transform]="skew | bendMe: unit" app-placeholder *ngFor="let item of allowedUnits" [style.left]="item[0] * unit + 'px'" [style.width]="item[1] * unit + 'px'" [day]="day" [unit]="unit" [left]="item[0] * unit" [width]="item[1] * unit"></div>
+  <div class="room-id" [style.width]="unit + 'px'" [style.border-left-color]="color$ | async">{{id}}</div>
+  <div 
+  *ngFor="let item of allowedUnits" 
+  app-placeholder 
+  [style.transform]="skew | bendMe: unit"
+  [style.left]="item[0] * unit + 'px'"
+  [style.width]="item[1] * unit + 'px'"
+  [day]="day"
+  [unit]="unit"
+  [left]="item[0] * unit"
+  [width]="item[1] * unit">
+</div>
 </div>
 </div>

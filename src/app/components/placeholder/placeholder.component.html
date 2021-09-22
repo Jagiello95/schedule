@@ -1,15 +1,9 @@
 
 <div 
-style="height:5rem; position:relative;"
-[class.hovered]="el.nativeElement.offsetLeft < draggableElement?.offsetLeft && draggableElement?.offsetLeft + draggableElement?.clientWidth < el.nativeElement.offsetLeft + el.nativeElement.clientWidth"
->
-<ng-content></ng-content>
-<div 
 #ph
+class="placeholder"
 *ngIf="dragEntered && draggableElement?.clientWidth <= el.nativeElement.clientWidth"
-style="position:absolute; height:5rem; background-color:lightgray; opacity:0.5;"
 [style.width]="draggableElement?.style.width"
 [style.left]="draggableElement?.offsetLeft - el.nativeElement.offsetLeft | snapMe: unit: el.nativeElement.offsetLeft: el.nativeElement.offsetLeft + el.nativeElement.clientWidth: draggableElement?.clientWidth"
 ></div>
 
-</div>

@@ -14,7 +14,6 @@ export class HoursTimelineComponent implements OnInit {
 
   ngOnInit(): void {
     this.hours = this.getDates(new Date(), new Date(new Date().setDate(new Date().getDate() + this.timeUnits)))
-    console.log(this.hours)
   }
 
   public timeConvert(n) {
@@ -27,7 +26,6 @@ export class HoursTimelineComponent implements OnInit {
     }
 
     public getDates(startDate, stopDate) {
-      console.log(startDate, stopDate)
       var dateArray = new Array();
       var currentDate = new Date(startDate).setDate(new Date(startDate).getDate() - 1);
       while (currentDate <= stopDate) {
