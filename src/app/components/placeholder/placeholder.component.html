@@ -1,9 +1,0 @@
-
-<div 
-#ph
-class="placeholder"
-*ngIf="dragEntered && draggableElement?.clientWidth <= el.nativeElement.clientWidth"
-[style.width]="draggableElement?.style.width"
-[style.left]="draggableElement?.offsetLeft - el.nativeElement.offsetLeft | snapMe: unit: el.nativeElement.offsetLeft: el.nativeElement.offsetLeft + el.nativeElement.clientWidth: draggableElement?.clientWidth"
-></div>
-

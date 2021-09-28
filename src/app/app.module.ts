@@ -17,7 +17,6 @@ import { AjScheduleComponent } from './components/aj-schedule/aj-schedule.compon
 import { HoursTimelineComponent } from './components/hours-timeline/hours-timeline.component';
 import { ItemXComponent } from './components/item-x/item-x.component';
 import { SnapMePipe } from './components/utils/snap-me.pipe';
-import { PlaceholderComponent } from './components/placeholder/placeholder.component';
 import { BendMePipe } from './components/utils/bend-me.pipe';
 
 @NgModule({
@@ -34,7 +33,6 @@ import { BendMePipe } from './components/utils/bend-me.pipe';
     ItemXComponent,
     SnapMePipe,
     BendMePipe,
-    PlaceholderComponent
   ],
   imports: [
     DragDropModule,

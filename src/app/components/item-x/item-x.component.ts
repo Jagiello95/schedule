@@ -12,11 +12,11 @@ import { ScheduleService } from 'src/app/schedule.service';
   styleUrls: ['./item-x.component.scss']
 })
 export class ItemXComponent implements OnInit, AfterViewInit {
+  static counter = 0;
   public range;
   public start;
   public rangeChange$: BehaviorSubject<number>;
   public startChange$: BehaviorSubject<number>;
-  @Input() public index;
   @Input() public parentId;
   @Output() public dragStartEvent = new EventEmitter<number>();
   @Output() public dragEndEvent = new EventEmitter<any>();
@@ -37,6 +37,11 @@ export class ItemXComponent implements OnInit, AfterViewInit {
   @Input()
   unit;
 
+  @Input() set index(index: number) {
+    this.model.index = index
+  }
+  // index;
+
   @Input()
   axis;
 
@@ -51,9 +56,14 @@ export class ItemXComponent implements OnInit, AfterViewInit {
   @Output() 
   draggableClick = new EventEmitter();
 
+  @Output()
+  freeSpace = new EventEmitter();
+
   private currentlyDragged = false;
 
-  constructor(public el: ElementRef, public helper: EventHelperService, private cdRef : ChangeDetectorRef, private scheduleService: ScheduleService) {}
+  constructor(public el: ElementRef, public helper: EventHelperService, private cdRef : ChangeDetectorRef, private scheduleService: ScheduleService) {
+    ItemXComponent.counter++;
+  }
 
   @HostListener('click', ['$event'])
   public onClick(event: any): void {
@@ -184,61 +194,28 @@ export class ItemXComponent implements OnInit, AfterViewInit {
     })
     .on('dragstart', (event) => {
 
-
+      
       const element = event.target;
       element.dataset.model = this.model;
+      element.dataset.originalLeft = this.el.nativeElement.offsetLeft;
+      this.freeSpace.emit(this.model);
       (window as any).dragData = this.model;
-      // element.parentElement.removeChild(element)
-      const interaction = event.interaction;
-      if (event.currentTarget.getAttribute('clonable') != 'false') {
-        var original = event.currentTarget;
-        this.originalLeft = original.offsetLeft;
-        this.originalWidth = original.clientWidth;
-        this.clone = event.currentTarget.cloneNode(true);
-        this.clone.setAttribute('clonable','false');
-        this.clone.style.position = "absolute";
-        this.clone.style.left = original.offsetLeft +"px";
-        this.clone.style.height = original.clientHeight + "px"
-        this.clone.style.width = original.clientWidth + "px"
-        this.clone.style.top = original.offsetTop +"px";
-        this.clone.style['z-index'] = 20
-        this.clone.model = this.model;
-        this.originalParent = document.body
-        // original.parentElement.removeChild(event.currentTarget)
-        original.parentElement.appendChild(this.clone);
-        interaction.start({ name: 'drag' },event.interactable,this.clone);
-        this.dragStartEvent.emit();
-      }
-
-  
-
     })
     .on('resizeend', (event) => {
       this.resizeEnd$.next()
     })
+
     .on('dragend', (event) => {
-
-
       this.dragEndEvent.emit(1234567890)
       event.target.style.top = 0;
-      event.target.setAttribute('data-y', 0);
+      // event.target.setAttribute('data-y', 0);
+      // this.startChange$.next(this.model.start);
+    // event.target.setAttribute('data-x', this.model.start);
       this.dragEnd$ = combineLatest([
         this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
         this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
       ])
-
-      if (!event.target.getAttribute('in-placeholder')) {
-        this.clone.classList.add('animated')
-        this.clone.style.left = this.originalLeft + 'px';
-        setTimeout(()=> {
-          this.scheduleService.changeTasks(this.clone.model.current, this.clone.model.current, {...this.clone.model})
-          if (this.clone.parentElement) {
-            this.clone.parentElement.removeChild(this.clone);
-          }
-        }, 300)
-      }
-     
-
+    
     })
 }
 
@@ -250,11 +227,11 @@ public dragMoveListener(event) {
   var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
 
   // target.style.position = 'absolute';
-  if (this.clone) {
-    this.clone.style.left = x + 'px' ;
-    this.clone.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
-    this.clone.style.top = y  +"px";
-  }
+  // if (this.clone) {
+  //   this.clone.style.left = x + 'px' ;
+  //   this.clone.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
+  //   this.clone.style.top = y  +"px";
+  // }
 
   if (x >= 0) {
     if (x + target?.clientWidth > target?.parentElement?.clientWidth) {

@@ -8,7 +8,7 @@ import { DragModel } from './components/item.model';
 export class ScheduleService implements OnInit {
   public placeholderDrop$ = new Subject<void> ();
   public tasks = new Map();
-  public roomsAmount = 20;
+  public roomsAmount = 600;
   public timeUnits = 30;
   public itemHeight = 3;
   public skew = '15deg'
@@ -19,10 +19,11 @@ export class ScheduleService implements OnInit {
 
   changeTasks(id, id2, task: DragModel) {
     if (id === id2) {
-      this.tasks.get(id2).push(task)
+      this.tasks.get(id).splice(task.index , 1);
+      this.tasks.get(id).push({...task, current: id})
       return;
     }
-    // this.tasks.get(id).splice(task.index, 1);
+    this.tasks.get(id).splice(task.index, 1);
     this.tasks.get(id2).push({...task, current: id2, index: this.tasks.get(id2).length});
   }
 
@@ -40,6 +41,7 @@ export class ScheduleService implements OnInit {
   }
 
   public ngOnInit() {
+
     
     
 
