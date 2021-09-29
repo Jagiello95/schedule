@@ -13,7 +13,6 @@
   [forbiddenIndexes$]="forbiddenIndexes$"
   [allowedIndexes$]="allowedIndexes$"
   [parentId]="id"   
-  (dragEndEvent)="onItemDragEnd($event)" 
   (freeSpace)="onFreeSpace($event)"
   (dragStartEvent)="onItemDragStart(i)"></app-item-x>
   <div class="room-id" [style.width]="unit + 'px'" [style.border-left-color]="color$ | async">{{id}}</div>

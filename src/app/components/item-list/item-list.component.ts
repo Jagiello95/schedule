@@ -86,11 +86,14 @@ export class ItemListComponent implements OnInit, AfterViewInit {
             const model = {...(window as any).dragData, start: rounded.start * this.unit };
  
             event.relatedTarget.style.left = event.relatedTarget.dataset.originalLeft + 'px';
-            // event.relatedTarget.dataset.left = event.relatedTarget.dataset.originalLeft;
+            event.relatedTarget.style.top = 0;
+            event.relatedTarget.dataset.left = event.relatedTarget.dataset.originalLeft;
+            event.relatedTarget.dataset.top = 0;
             setTimeout(()=> {
 
               this.service.changeTasks((window as any).dragData.current, (window as any).dragData.current,{...model, start: event.relatedTarget.dataset.originalLeft, id: this.service.getRandomString()});
-              event.relatedTarget.classList.remove('animated')
+              event.relatedTarget.classList.remove(['animated', 'top']);
+
             },300)
             return;
           }
@@ -173,8 +176,7 @@ reactToDrop(model: any) {
     } )
  }
 
- onItemDragEnd(event) {
-}
+
 
  onItemDragStart(i) {
    this.service.deleteItem(i, this.day)

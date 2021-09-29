@@ -198,6 +198,7 @@ export class ItemXComponent implements OnInit, AfterViewInit {
       const element = event.target;
       element.dataset.model = this.model;
       element.dataset.originalLeft = this.el.nativeElement.offsetLeft;
+      this.el.nativeElement.classList.add('top');
       this.freeSpace.emit(this.model);
       (window as any).dragData = this.model;
     })
@@ -206,8 +207,6 @@ export class ItemXComponent implements OnInit, AfterViewInit {
     })
 
     .on('dragend', (event) => {
-      this.dragEndEvent.emit(1234567890)
-      event.target.style.top = 0;
       // event.target.setAttribute('data-y', 0);
       // this.startChange$.next(this.model.start);
     // event.target.setAttribute('data-x', this.model.start);
