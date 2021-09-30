@@ -8,7 +8,7 @@ import { DragModel } from './components/item.model';
 export class ScheduleService implements OnInit {
   public placeholderDrop$ = new Subject<void> ();
   public tasks = new Map();
-  public roomsAmount = 30;
+  public roomsAmount = 600;
   public timeUnits = 30;
   public itemHeight = 3;
   public skew = '15deg'
