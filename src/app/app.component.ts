@@ -7,15 +7,17 @@ import { ColumnModel, RowModel } from './components/aj-schedule/aj-schedule.comp
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  public tasks = new Map();
+  public items = new Map();
   mockRows: RowModel[];
   mockColumns: ColumnModel[];
-  mockRowsAmount = 100
+  mockRowsAmount = 100;
+  public unit = 60;
   public colors = ["lightgoldenrodyellow", "lightcoral", "lightblue", "lightsalmon", "lightseagreen", "lightyellow"]
 
   ngOnInit() {
     this.prepareMockRows();
     this.prepareMockColumns();
+    this.prepareInitialData();
 
   }
 
@@ -72,7 +74,7 @@ public getRandomString() {
 
 public prepareInitialData() {
   for (let i = 0; i < this.mockRowsAmount; i++) {
-    this.tasks.set(
+    this.items.set(
       i, this.prepareItems(i)
     )
   }

@@ -1,7 +1,7 @@
 <div class="item-list-container">
  <div class="placeholder" [style.width.px]="itemListWidth" [style.height.px]="itemHeight">
   <app-item-x 
-  *ngFor="let task of (service.tasks$ | async).get(index); let i = index; trackBy:identify"
+  *ngFor="let task of (service.items$ | async).get(index); let i = index; trackBy:identify"
   class="task-x"
   [style.background-color]="task.color"
   [style.height.px]="itemHeight"

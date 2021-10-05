@@ -17,7 +17,7 @@ export interface ScheduleConfig {
   providedIn: 'root'
 })
 export class ScheduleService implements OnInit {
-  public tasks: Map<number, DragModel[]>;
+  public items: Map<number, DragModel[]>;
   public rowsAmount = 200;
   public unit: number;
   public timeUnitsAmount: number;
@@ -25,7 +25,7 @@ export class ScheduleService implements OnInit {
   public skew: number;
   public shiftRight: number;
   public colors = ["lightgoldenrodyellow", "lightcoral", "lightblue", "lightsalmon", "lightseagreen", "lightyellow"]
-  public tasks$: Subject<any> = new BehaviorSubject<any>(this.tasks);
+  public items$: Subject<any>
 
 
 
@@ -36,17 +36,18 @@ export class ScheduleService implements OnInit {
     this.rowsAmount = config.rowsAmount;
     this.skew = config.skew;
     this.shiftRight = config.shiftRight;
-    this.tasks = config.items;
-    this.prepareInitialData();
+    this.items = config.items;
+    this.items$ =  new BehaviorSubject<any>(this.items);
+  
   }
   public changeTasks(dragListIndex: number, dropListIndex: number, task: DragModel) {
     if (dragListIndex === dropListIndex) {
-      this.tasks.get(dragListIndex).splice(task.index , 1);
-      this.tasks.get(dropListIndex).push({...task, current: dragListIndex})
+      this.items.get(dragListIndex).splice(task.index , 1);
+      this.items.get(dropListIndex).push({...task, current: dragListIndex})
       return;
     }
-    this.tasks.get(dragListIndex).splice(task.index, 1);
-    this.tasks.get(dropListIndex).push({...task, current: dropListIndex, index: this.tasks.get(dropListIndex).length});
+    this.items.get(dragListIndex).splice(task.index, 1);
+    this.items.get(dropListIndex).push({...task, current: dropListIndex, index: this.items.get(dropListIndex).length});
   }
 
   public ngOnInit() {}
