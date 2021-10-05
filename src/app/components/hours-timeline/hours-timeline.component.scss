@@ -1,0 +1,17 @@
+.x-units-container {
+  display: flex;
+
+  .x-units {
+    display: flex;
+    position: relative;
+
+    .x-unit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-width: 1px 0px 1px 0px;
+      border-style: solid;
+      border-color: lightgray;
+    }
+  }
+}

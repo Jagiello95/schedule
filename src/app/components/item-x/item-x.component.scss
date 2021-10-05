@@ -1,12 +1,12 @@
-.item {
-  background-color:white;
-  pointer-events:none;
-  z-index:100000;
-}
-
 :host {
-  background-color:white;
-  z-index:10000;
-  height:100%;
-  width:100%;
+  z-index: 10;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px;
+  display: block;
+  position: absolute;
+
+  .item {
+    text-align: center;
+    pointer-events: none;
+    z-index: 15;
+  }
 }

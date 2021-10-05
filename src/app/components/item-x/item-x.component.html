@@ -1,5 +1,6 @@
-<div class="item" >
-  start: {{start}} 
-  range: {{range}}
-  {{forbiddenIndexes | json}}
-  </div>
+<div class="item" [style.transform.deg]="skew" >
+  <small style="color:blue">{{model.internalId}}</small>
+  <br>
+  <small>{{parentId}}</small>
+  <br>
+</div>

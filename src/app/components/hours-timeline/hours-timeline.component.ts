@@ -1,4 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ScheduleService } from 'src/app/schedule.service';
+import { ColumnModel } from '../aj-schedule/aj-schedule.component';
 
 @Component({
   selector: 'app-hours-timeline',
@@ -6,23 +8,15 @@ import { Component, Input, OnInit } from '@angular/core';
   styleUrls: ['./hours-timeline.component.scss']
 })
 export class HoursTimelineComponent implements OnInit {
-  public hours
-  @Input() unit: number;
-  @Input() timeUnits: number;
-  @Input() axis;
-  constructor() { }
+  @Input() columns: ColumnModel;
+  public unit = this.service.unit;
+  public timeUnitsAmount = this.service.timeUnitsAmount;
+  public timeUnits: Date[] | number[];
+  public itemHeight = this.service.itemHeight;
+  
+  constructor(public service: ScheduleService) { }
 
   ngOnInit(): void {
-    this.hours = new Array(this.timeUnits).fill(1);
   }
-
-  public timeConvert(n) {
-    var num = n;
-    var hours = (num / 60);
-    var rhours = Math.floor(hours);
-    var minutes = (hours - rhours) * 60;
-    var rminutes = Math.round(minutes);
-    return rhours + '.' + rminutes;
-    }
 
 }

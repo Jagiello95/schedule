@@ -1,19 +1,22 @@
-.schedule-container-y {
-  display:flex;
+.schedule-container-x {
+  display: flex;
+  flex-direction: column;
+  margin-left: 5rem;
+  margin-top: 5rem;
+  border: 1px solid lightgray;
   app-item-list {
-    display:block;
-    flex:1;
-    margin-right:2rem;
+    display: block;
+    flex: 1;
   }
+  overflow: hidden;
 }
 
-.schedule-container-x {
-  display:flex;
-  flex-direction:column;
-  height:100%;
-  app-item-list {
-    display:block;
-    flex:1;
-    margin-bottom:2rem;
-  }
+.schedule-grid-container {
+  background: repeating-linear-gradient(
+    90deg,
+    white,
+    white 59px,
+    lightgray 0px,
+    lightgray 60px
+  );
 }

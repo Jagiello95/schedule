@@ -1,14 +1,11 @@
-<div [ngClass]="{'schedule-container-x': axis === 'x', 'schedule-container-y' : axis === 'y' }">
-    <app-hours-timeline [unit]="unit" [timeUnits]="timeUnits" [axis]="axis" ></app-hours-timeline>
-    <app-item-list [unit]="unit" [day]="1" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="2" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="3" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="4" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="5" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="6" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="7" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
-    <app-item-list [unit]="unit" [day]="8" [timeUnits]="timeUnits" [axis]="axis"></app-item-list>
 
+<div
+class="schedule-container-x"
+[style.width.px]="scheduleWidth">
+{{numberOfItems}}
+    <div [class.schedule-grid-container]="showGrid" *ngIf="rows">
+        <app-hours-timeline [columns]="columns"></app-hours-timeline>
+        <app-item-list  *ngFor="let row of rows; let i = index; trackBy: identify"   [attr.data-index]="i" [index]="i" [row]="row"></app-item-list>
+    </div>
 </div>
-
-{{unit}}
+{{columns | json}}

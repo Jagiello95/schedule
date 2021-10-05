@@ -1,1 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
+app-aj-schedule > * {
+  user-select: none;
+}
+
+body { 
+  width:5000px;
+}

@@ -28,8 +28,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/angular-resize-element/bundles/style.scss"
+              "src/styles.scss"
             ],
             "scripts": []
           },
