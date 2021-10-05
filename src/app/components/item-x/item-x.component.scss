@@ -3,11 +3,10 @@
   box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px;
   display: block;
   position: absolute;
-  transform: skew(-15deg) translateX(30px);
+
   .item {
     text-align: center;
     pointer-events: none;
     z-index: 15;
-    transform: skew(15deg);
   }
 }

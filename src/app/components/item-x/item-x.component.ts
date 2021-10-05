@@ -1,10 +1,9 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { EventHelperService } from 'src/app/event-helper.service';
 import { DragModel } from '../item.model';
-import { BehaviorSubject, forkJoin, Observable, Subject, combineLatest, zip, Subscription} from 'rxjs'
+import { BehaviorSubject, Observable, Subject, combineLatest, Subscription} from 'rxjs'
 import {distinctUntilChanged, map} from 'rxjs/operators';
-import { CombineLatestOperator } from 'rxjs/internal/observable/combineLatest';
 import { ScheduleService } from 'src/app/schedule.service';
 @Component({
   selector: 'app-item-x',
@@ -14,21 +13,24 @@ import { ScheduleService } from 'src/app/schedule.service';
 export class ItemXComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() public parentId: number;
   @Input() public model: DragModel;
-  @Input() public parentWidth: number;
-  @Input() public unit: number;
   @Input() private forbiddenIndexes$: Observable<number[][]>;
 
   @Input() set index(index: number) {
     this.model.index = index
   }
 
-  @Output() public dragStartEvent = new EventEmitter<number>();
   @Output() public dragEndEvent = new EventEmitter<any>();
   @Output() public draggableClick = new EventEmitter();
   @Output() public freeSpace = new EventEmitter();
 
 
   static counter = 0;
+  public unit = this.scheduleService.unit;
+  public parentWidth = this.scheduleService.rowsAmount;
+  public itemHeight = this.scheduleService.itemHeight;
+  public skew = this.scheduleService.skew;
+  public shiftRight = this.scheduleService.shiftRight;
+  public currentlyDragged = false;
 
   public range: number;
   public start: number;
@@ -46,11 +48,11 @@ export class ItemXComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public closestRight: number;
   public closestLeft: number;
+  
 
   public forbiddenIndexes: number[][];
-  public itemHeight = this.scheduleService.itemHeight;
 
-  public currentlyDragged = false;
+
 
   constructor(
     public el: ElementRef,
@@ -67,16 +69,7 @@ export class ItemXComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {
-    this.el.nativeElement.style.width = this.el.nativeElement.clientWidth;
-    this.el.nativeElement.style.left = this.model.start + 'px';
-  }
-
-  ngOnDestroy(): void {
-    this.resolveSubscriptions();
-  }
-
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.assignGlobalVars();
     this.assignSubjects();
     this.assignSubscriptions();
@@ -85,30 +78,35 @@ export class ItemXComponent implements OnInit, OnDestroy, AfterViewInit {
     this.assignInteractionEvents();
   }
 
-
-public dragMoveListener(event) {
-  var target = event.target
-  // keep the dragged position in the data-x/data-y attributes
-  var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
-  var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
-
-  if ( x >= 0) {
-    if (x + target?.clientWidth > target?.parentElement?.clientWidth) {
-      this.startChange$.next(target.parentElement.clientWidth - target.clientWidth)
-    } else {
-      this.startChange$.next(x)
-    }
-  } else {
-    this.startChange$.next(0)
+  public ngAfterViewInit(): void {
+    this.assignItemInitStyle();
   }
-  
-  target.style.top= y + 'px'
-  target.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
 
-  // update the posiion attributes
-  target.setAttribute('data-x', x)
-  target.setAttribute('data-y', y)
-}
+  public ngOnDestroy(): void {
+    this.resolveSubscriptions();
+  }
+
+  public dragMoveListener(event) {
+    const target = event.target;
+    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
+  ;
+    if ( x >= 0) {
+      if (x + target?.clientWidth > target?.parentElement?.clientWidth) {
+        this.startChange$.next(target.parentElement.clientWidth - target.clientWidth)
+      } else {
+        this.startChange$.next(x)
+      }
+    } else {
+      this.startChange$.next(0)
+    }
+    
+    target.style.top= y + 'px'
+    target.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
+
+    target.setAttribute('data-x', x)
+    target.setAttribute('data-y', y)
+  }
 
   public initValues() {
     this.el.nativeElement.style.left = !isNaN(this.model.start) ? `${this.model.start}px` : this.model.start;
@@ -129,7 +127,7 @@ public dragMoveListener(event) {
   }
 
   public isResizeTowardsLeft(event) {
-    return this.helper.isResizeTowardsLeft(event);
+    return this.helper.isResizeTowardsLeft(event, this.unit);
   }
 
   public isResizeTowardsRight(event) {
@@ -149,7 +147,7 @@ public dragMoveListener(event) {
   }
 
   public isInsideLeftEdgeOfContainer(param) {
-    return this.helper.isInsideLeftEdgeOfContainer(param)
+    return this.helper.isInsideLeftEdgeOfContainer(param, this.unit)
   }
 
   public isMovedByUnit(event, unit) {
@@ -165,28 +163,14 @@ public dragMoveListener(event) {
   }
 
   public isMoreThanEdgeLeft(event) {
-    return event.target.offsetLeft / this.unit > this.closestLeft
+    return this.helper.isMoreThanEdgeLeft(event, this.unit, this.closestLeft)
   }
 
   public isLessThanEdgeRight(event) {
-    return ((event.target.offsetLeft + event.target.clientWidth) / this.unit)  < this.closestRight
-  }
-
-
-  public isAvailable(index: number) {
-    return true;
-    return this.helper.isAvailable(index, this.forbiddenIndexes)
+    return this.helper.isLessThanEdgeRight(event, this.unit, this.closestRight)
   }
 
   public handlePositiveResizeTowardsLeft(event, unit) {
-    // if (!this.isAvailable((event.target.offsetLeft - unit) / unit)) {
-    //   return;
-    // }
-    // console.log('can move left:', this.isAvailable((event.target.offsetLeft - unit) / unit), event.target.offsetLeft - unit)
-
-    if (!this.isAvailable((event.target.offsetLeft - unit) / unit)) {
-      return;
-    }
     this.startChange$.next(event.target.offsetLeft - unit)
     this.rangeChange$.next(event.target.clientWidth + unit)
   }
@@ -197,17 +181,11 @@ public dragMoveListener(event) {
   }
 
   public handlePositiveResizeTowardsRight(event, unit) {
-    if (!this.isAvailable(((event.target.offsetLeft + event.target.clientWidth + this.unit) - unit) / unit)) {
-      return;
-    }
     this.rangeChange$.next(event.target.clientWidth + unit)
-    // this.rangeChange$.next(event.rect.width)
-    // event.target.style.height = '5rem'
   }
 
   public handleNegativeResizeTowardsLeft(event, unit) {
     this.rangeChange$.next(event.target.clientWidth - unit)
-    // console.log('hello')
   }
 
   public assignDatasetValues(event, x, y) {
@@ -276,6 +254,24 @@ public dragMoveListener(event) {
     this.sizeChangeSub && this.sizeChangeSub.unsubscribe();
   }
 
+  public assignItemInitStyle() {
+    this.el.nativeElement.style.width = this.el.nativeElement.clientWidth;
+    this.el.nativeElement.style.left = this.model.start + 'px';
+    const skew = this.skew && `skew(-${this.skew}deg)`
+    const shift = this.shiftRight && `translateX(${this.shiftRight}px)`;
+    if (skew && shift) {
+      this.el.nativeElement.style.transform = skew.concat(' ',shift);
+      this.el.nativeElement.firstChild.style.transform = `skew(${this.skew}deg)`
+    }
+    else if (skew) {
+      this.el.nativeElement.style.transform = skew;
+      this.el.nativeElement.firstChild.style.transform = `skew(${this.skew}deg)`
+    }
+    else if (shift) {
+      this.el.nativeElement.style.transform = shift
+    }
+  }
+
   public assignInteractionEvents() {
     interact(this.el.nativeElement)
     .resizable({
@@ -289,7 +285,9 @@ public dragMoveListener(event) {
           x = (parseFloat(x) || 0) + event.deltaRect.left
           y = (parseFloat(y) || 0) + event.deltaRect.top
           
+          
           if (this.isLeftEdge(event)) {
+  
             if (this.isResizeTowardsLeft(event)) {
              if (this.isCursorLeftFromLeftEdge(event)) {
                if(this.isInsideLeftEdgeOfContainer(x)) {
@@ -343,26 +341,15 @@ public dragMoveListener(event) {
         }.bind(this)
          
       },
-      // modifiers: [
-      //   interact.modifiers.snapSize({
-      //     targets: [
-      //       { width: this.unit },
-      //       interact.snappers.grid({ width: this.unit, height: this.unit }),
-      //     ],
-      //   }),
-      // ],
     })
 
-    .on(['resizeend'], (event) => {
+    .on(['resizeend'], () => {
       this.model = {...this.model, range: this.el.nativeElement.clientWidth}
     })
     .draggable({
-      listeners: { move: (window as any).dragMoveListener },
-      // inertia: true,
+      listeners: { move: (window as any).dragMoveListener},
     })
     .on('dragstart', (event) => {
-
-      
       const element = event.target;
       element.dataset.model = this.model;
       element.dataset.originalLeft = this.el.nativeElement.offsetLeft;

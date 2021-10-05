@@ -1,10 +1,11 @@
 
 <div
 class="schedule-container-x"
-[style.width.px]="unit * timeUnits">
-{{numberOfReservations}}
-    <div class="schedule-grid-container">
-        <app-hours-timeline [unit]="unit" [timeUnits]="timeUnits" [axis]="axis"></app-hours-timeline>
-        <app-item-list  *ngFor="let room of rooms; let i = index"   [attr.data-index]="i" [unit]="unit" [day]="i" [timeUnits]="timeUnits" [axis]="axis" [id]="'Room' + i"></app-item-list>
+[style.width.px]="scheduleWidth">
+{{numberOfItems}}
+    <div [class.schedule-grid-container]="showGrid" *ngIf="rows">
+        <app-hours-timeline [columns]="columns"></app-hours-timeline>
+        <app-item-list  *ngFor="let row of rows; let i = index; trackBy: identify"   [attr.data-index]="i" [index]="i" [row]="row"></app-item-list>
     </div>
 </div>
+{{columns | json}}

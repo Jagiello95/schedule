@@ -1,20 +1,17 @@
-.y-units-container {
+.x-units-container {
   display: flex;
 
-  .y-units {
+  .x-units {
     display: flex;
     position: relative;
 
-    .y-unit {
+    .x-unit {
       display: flex;
       align-items: center;
       justify-content: center;
       border-width: 1px 0px 1px 0px;
       border-style: solid;
       border-color: lightgray;
-      // &:first-of-type {
-      //   border-left: 0.5rem solid transparent;
-      // }
     }
   }
 }

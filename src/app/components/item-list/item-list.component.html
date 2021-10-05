@@ -1,21 +1,16 @@
 <div class="item-list-container">
- <div *ngIf="axis === 'x'" class="placeholder" [style.width.px]="timeUnits * unit"   [style.height.rem]="itemHeight">
+ <div class="placeholder" [style.width.px]="itemListWidth" [style.height.px]="itemHeight">
   <app-item-x 
-  *ngFor="let task of (service.tasks$ | async).get(day); let i = index;trackBy:identify"
-
+  *ngFor="let task of (service.tasks$ | async).get(index); let i = index; trackBy:identify"
   class="task-x"
-  [style.background-color]="color$ | async"
-  [style.height.rem]="itemHeight"
+  [style.background-color]="task.color"
+  [style.height.px]="itemHeight"
   [model]="task" 
-  [unit]="unit" 
-  [axis]="axis"
   [index]="i"
-  [parentWidth]="timeUnits" 
   [forbiddenIndexes$]="forbiddenIndexes$"
   [allowedIndexes$]="allowedIndexes$"
   [parentId]="id"   
-  (freeSpace)="onFreeSpace($event)"
-  (dragStartEvent)="onItemDragStart(i)"></app-item-x>
-  <div class="room-id" [style.height.rem]="itemHeight" [style.width.px]="unit" [style.border-left-color]="color$ | async">{{id}}</div>
+  (freeSpace)="onFreeSpace($event)"></app-item-x>
+  <div class="room-id" [style.height.px]="itemHeight" [style.width.px]="unit" [style.border-left-color]="color">{{id}}</div>
 </div>
 </div>

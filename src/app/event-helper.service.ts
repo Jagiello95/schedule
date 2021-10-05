@@ -18,8 +18,8 @@ export class EventHelperService {
     return event.rect.width + event.target.offsetLeft <= event.target.parentElement.clientWidth
   }
 
-  public isResizeTowardsLeft(event) {
-    return event.velocity.x < 0 && -event.velocity.x > 60
+  public isResizeTowardsLeft(event, unit) {
+    return event.velocity.x < 0 && -event.velocity.x > unit
   }
 
   public isResizeTowardsRight(event) {
@@ -38,8 +38,8 @@ export class EventHelperService {
     return event.page.x  >  event.target.getBoundingClientRect().right
   }
 
-  public isInsideLeftEdgeOfContainer(x) {
-    return x + 60 > 0
+  public isInsideLeftEdgeOfContainer(x, unit) {
+    return x + unit > 0
   }
 
   public isMovedByUnit(event, unit) {
@@ -52,6 +52,14 @@ export class EventHelperService {
 
   public isBeingResizedOverParentWidth(event, unit) {
     return event.target.clientWidth + event.target.offsetLeft + unit > event.target.parentElement.clientWidth
+  }
+
+  public isMoreThanEdgeLeft(event, unit, closestLeft) {
+    return event.target.offsetLeft / unit > closestLeft
+  }
+
+  public isLessThanEdgeRight(event, unit, closestRight) {
+    return ((event.target.offsetLeft + event.target.clientWidth) / unit)  < closestRight
   }
 
 

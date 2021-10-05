@@ -1,14 +1,17 @@
-<div class="y-units-container">
+<div class="x-units-container">
   <div 
-  *ngIf="axis === 'x'" 
-  class="y-units"
-  [style.height.rem]="itemHeight"
-  [style.width.px]="hours.length * unit">
+  class="x-units"
+  [style.height.px]="itemHeight"
+  [style.width.px]="timeUnitsAmount * unit">
     <div 
-    *ngFor="let item of hours, let j = index"
-    class="y-unit" 
+    *ngFor="let item of columns, let j = index"
+    class="x-unit"
+    [style.min-width.px]="unit"
     [style.width.px]="unit">
-      <span *ngIf="j">{{item | date: 'dd/MM'}}</span>
+    <ng-container *ngIf="j">
+      <span>{{item.label | date: 'dd/MM'}}</span>
+      <!-- <span>{{item.label}}</span> -->
+    </ng-container>
     </div>
   </div>
 </div>
