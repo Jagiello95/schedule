@@ -40,23 +40,8 @@ export class ScheduleService implements OnInit {
     }
   }
 
-  public ngOnInit() {
+  public ngOnInit() {}
 
-    
-    
-
-
-  }
-
-  public timeConvert(n) {
-    n = !isNaN(n) ? n : +n.substring(0, n.length-2)
-    var num = 0.75 * n;
-    var hours = (num / 60);
-    var rhours = Math.floor(hours);
-    var minutes = (hours - rhours) * 60;
-    var rminutes = Math.round(minutes);
-    return rhours + '.' + rminutes;
-    }
 
     public deleteItem(i: number, day: number) {
       const newArr = [...this.tasks.get(day)]

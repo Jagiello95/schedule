@@ -1,6 +1,4 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { ScheduleService } from './schedule.service';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',

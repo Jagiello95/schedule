@@ -1,8 +1,8 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { EventHelperService } from 'src/app/event-helper.service';
 import { DragModel } from '../item.model';
-import { BehaviorSubject, forkJoin, Observable, Subject, combineLatest, zip} from 'rxjs'
+import { BehaviorSubject, forkJoin, Observable, Subject, combineLatest, zip, Subscription} from 'rxjs'
 import {distinctUntilChanged, map} from 'rxjs/operators';
 import { CombineLatestOperator } from 'rxjs/internal/observable/combineLatest';
 import { ScheduleService } from 'src/app/schedule.service';
@@ -11,62 +11,57 @@ import { ScheduleService } from 'src/app/schedule.service';
   templateUrl: './item-x.component.html',
   styleUrls: ['./item-x.component.scss']
 })
-export class ItemXComponent implements OnInit, AfterViewInit {
-  static counter = 0;
-  public range;
-  public start;
-  public rangeChange$: BehaviorSubject<number>;
-  public startChange$: BehaviorSubject<number>;
-  @Input() public parentId;
-  @Output() public dragStartEvent = new EventEmitter<number>();
-  @Output() public dragEndEvent = new EventEmitter<any>();
-  public dragEnd$: Observable<number[]>;
-  public resizeEnd$: Subject<void>;
-  public closestRight;
-  public closestLeft;
-  public clone;
-  public originalParent;
-  public originalLeft;
-  public originalWidth;
-  
-  public originalDay;
-  public sizeChange$: Observable<number[]>
-  @Input() model: DragModel;
-
-  @Input() parentWidth;
-  @Input()
-  unit;
+export class ItemXComponent implements OnInit, OnDestroy, AfterViewInit {
+  @Input() public parentId: number;
+  @Input() public model: DragModel;
+  @Input() public parentWidth: number;
+  @Input() public unit: number;
+  @Input() private forbiddenIndexes$: Observable<number[][]>;
 
   @Input() set index(index: number) {
     this.model.index = index
   }
-  // index;
 
-  @Input()
-  axis;
+  @Output() public dragStartEvent = new EventEmitter<number>();
+  @Output() public dragEndEvent = new EventEmitter<any>();
+  @Output() public draggableClick = new EventEmitter();
+  @Output() public freeSpace = new EventEmitter();
 
-  @Input()
-  forbiddenIndexes$;
 
-  public forbiddenIndexes;
+  static counter = 0;
 
-  @Input()
-  options: any;
+  public range: number;
+  public start: number;
 
-  @Output() 
-  draggableClick = new EventEmitter();
+  public rangeChange$: BehaviorSubject<number>;
+  public startChange$: BehaviorSubject<number>;
+  public resizeEnd$: Subject<void>;
 
-  @Output()
-  freeSpace = new EventEmitter();
+  public sizeChange$: Observable<number[]>
 
-  private currentlyDragged = false;
+  public forbiddenIndexesSub: Subscription;
+  public sizeChangeSub: Subscription;
+  public startChangeSub: Subscription;
+  public rangeChangeSub: Subscription;
 
-  constructor(public el: ElementRef, public helper: EventHelperService, private cdRef : ChangeDetectorRef, private scheduleService: ScheduleService) {
+  public closestRight: number;
+  public closestLeft: number;
+
+  public forbiddenIndexes: number[][];
+  public itemHeight = this.scheduleService.itemHeight;
+
+  public currentlyDragged = false;
+
+  constructor(
+    public el: ElementRef,
+    public helper: EventHelperService,
+    private cdRef : ChangeDetectorRef,
+    private scheduleService: ScheduleService) {
     ItemXComponent.counter++;
   }
 
   @HostListener('click', ['$event'])
-  public onClick(event: any): void {
+  public onClick(): void {
     if (!this.currentlyDragged) {
       this.draggableClick.emit();
     }
@@ -74,149 +69,21 @@ export class ItemXComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.el.nativeElement.style.width = this.el.nativeElement.clientWidth;
-    this.el.nativeElement.style.left= this.model.start + 'px';
-    
-    
+    this.el.nativeElement.style.left = this.model.start + 'px';
+  }
+
+  ngOnDestroy(): void {
+    this.resolveSubscriptions();
   }
 
   ngOnInit(): void {
-    (window as any).dragMoveListener = this.dragMoveListener.bind(this);
-    (window as any).dragUnit= this.unit;
-    this.resizeEnd$ = new Subject<void>();
-    this.rangeChange$ = new BehaviorSubject<number>(this.model.range);
-    this.forbiddenIndexes$.subscribe((forbiddenIndexes: number[][]) => {
-      this.forbiddenIndexes = forbiddenIndexes;
-      this.closestRight = this.getClosestRight(this.forbiddenIndexes?.map(el => el[0]), (this.start + this.range)/this.unit);
-      this.closestLeft = this.getClosestLeft(this.forbiddenIndexes?.map(el => el[0] + el[1]), (this.start)/this.unit);
-           this.cdRef.detectChanges();
-    })
-
-    this.rangeChange$.subscribe((width: number)=> {
-      this.range = Math.round(width / this.unit) * this.unit
-      this.el.nativeElement.style.width = width + 'px';
-    })
-  
-    this.startChange$ = new BehaviorSubject<number>(this.model.start)
-    this.startChange$.subscribe((left: number)=> {
-      this.start = Math.round(left / this.unit) * this.unit
-      this.el.nativeElement.style.left = left + 'px';
-    })
-
-    this.sizeChange$ = combineLatest([
-      this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
-      this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
-    ])
-    // this.sizeChange$.subscribe(console.log)
+    this.assignGlobalVars();
+    this.assignSubjects();
+    this.assignSubscriptions();
+    this.assignObservables();
     this.initValues()
-
-    interact(this.el.nativeElement)
-    .resizable({
-      edges: { top: false, left: true, bottom: false, right: true },
-      axis: 'x',
-      listeners: {
-        move: function (event) {
-          const client = (window as any);
-          const unit = (window as any).dragUnit
-          let { x, y } = event.target.dataset
-          x = (parseFloat(x) || 0) + event.deltaRect.left
-          y = (parseFloat(y) || 0) + event.deltaRect.top
-          
-          if (this.isLeftEdge(event)) {
-            if (this.isResizeTowardsLeft(event)) {
-             if (this.isCursorLeftFromLeftEdge(event)) {
-               if(this.isInsideLeftEdgeOfContainer(x)) {
-                if(this.isMoreThanEdgeLeft(event)) {
-                 this.handlePositiveResizeTowardsLeft(event, unit)
-                }
-                }
-              }
-            }
-            
-            if (this.isMovedByUnit(event, unit)) {
-              if (this.isBeingResizedBelowUnit(event, unit)) {
-                return;
-              }
-
-              if (this.isResizeTowardsRight(event)) {
-                this.handleNegativeResizeTowardsRight(event, unit)
-              }
-            }
-          Object.assign(event.target.dataset, { x: event.target.offsetLeft, y })
-
-          return;
-          
-        }
-
-        if(this.isRightEdge(event)) {
-          if (this.isResizeTowardsLeft(event)) {
-            if (this.isCursorLeftFromRightEdge(event)) {
-  
-                if (this.isBeingResizedBelowUnit(event, unit)) {
-                  return;
-                }
-                this.handleNegativeResizeTowardsLeft(event, unit)
-              }
-              
-            }
-          }
-
-          if (this.isResizeTowardsRight(event)) {
-            if (this.isCursorRightFromRightEdge(event)) {
-              if (this.isLessThanEdgeRight(event)) {
-                if (this.isBeingResizedOverParentWidth(event, unit)) {
-                  return;
-                }
-                  this.handlePositiveResizeTowardsRight(event, unit)
-              }
-          }
-        }
-        this.assignDatasetValues(event, x,y)
- 
-        }.bind(this)
-         
-      },
-      modifiers: [
-        interact.modifiers.snapSize({
-          targets: [
-            { width: this.unit },
-            interact.snappers.grid({ width: this.unit, height: this.unit }),
-          ],
-        }),
-      ],
-    })
-
-    .on(['resizeend'], (event) => {
-      this.model = {...this.model, range: this.el.nativeElement.clientWidth}
-    })
-    .draggable({
-      listeners: { move: (window as any).dragMoveListener },
-      // inertia: true,
-    })
-    .on('dragstart', (event) => {
-
-      
-      const element = event.target;
-      element.dataset.model = this.model;
-      element.dataset.originalLeft = this.el.nativeElement.offsetLeft;
-      this.el.nativeElement.classList.add('top');
-      this.freeSpace.emit(this.model);
-      (window as any).dragData = this.model;
-    })
-    .on('resizeend', (event) => {
-      this.resizeEnd$.next()
-    })
-
-    .on('dragend', (event) => {
-      // event.target.setAttribute('data-y', 0);
-      // this.startChange$.next(this.model.start);
-    // event.target.setAttribute('data-x', this.model.start);
-      this.dragEnd$ = combineLatest([
-        this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
-        this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
-      ])
-    
-    })
-}
+    this.assignInteractionEvents();
+  }
 
 
 public dragMoveListener(event) {
@@ -225,26 +92,16 @@ public dragMoveListener(event) {
   var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
   var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
 
-  // target.style.position = 'absolute';
-  // if (this.clone) {
-  //   this.clone.style.left = x + 'px' ;
-  //   this.clone.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
-  //   this.clone.style.top = y  +"px";
-  // }
-
-  if (x >= 0) {
+  if ( x >= 0) {
     if (x + target?.clientWidth > target?.parentElement?.clientWidth) {
-  
       this.startChange$.next(target.parentElement.clientWidth - target.clientWidth)
     } else {
-      // this.startChange$.next(Math.round(x/this.unit) * this.unit)
       this.startChange$.next(x)
     }
   } else {
     this.startChange$.next(0)
   }
   
-
   target.style.top= y + 'px'
   target.dataset.left = x > 0 ? Math.round(x/15) * 15 : 0
 
@@ -252,19 +109,6 @@ public dragMoveListener(event) {
   target.setAttribute('data-x', x)
   target.setAttribute('data-y', y)
 }
-
-public showEventInfo($event) {
-}
-
-public timeConvert(n) {
-  n = !isNaN(n) ? n : +n.substring(0, n.length-2)
-  var num = 0.75 * n;
-  var hours = (num / 60);
-  var rhours = Math.floor(hours);
-  var minutes = (hours - rhours) * 60;
-  var rminutes = Math.round(minutes);
-  return rhours + '.' + rminutes;
-  }
 
   public initValues() {
     this.el.nativeElement.style.left = !isNaN(this.model.start) ? `${this.model.start}px` : this.model.start;
@@ -324,12 +168,9 @@ public timeConvert(n) {
     return event.target.offsetLeft / this.unit > this.closestLeft
   }
 
-  
   public isLessThanEdgeRight(event) {
     return ((event.target.offsetLeft + event.target.clientWidth) / this.unit)  < this.closestRight
   }
-
-
 
 
   public isAvailable(index: number) {
@@ -374,12 +215,12 @@ public timeConvert(n) {
   }
 
   public getClosestRight(arr, i) {
-const data = arr?.filter((el)=> el >= i)
-var closest = data?.length ? data.reduce(function(prev, curr) {
-  return (Math.abs(curr - i) < Math.abs(prev - i) ? curr : prev);
-}) : this.parentWidth;
+    const data = arr?.filter((el)=> el >= i)
+    var closest = data?.length ? data.reduce(function(prev, curr) {
+      return (Math.abs(curr - i) < Math.abs(prev - i) ? curr : prev);
+    }) : this.parentWidth;
 
-return closest;
+    return closest;
   }
 
   public getClosestLeft(arr, i) {
@@ -389,6 +230,149 @@ return closest;
     }) : 0;
     
     return closest;
-      }
+  }
+
+  public assignGlobalVars() {
+    (window as any).dragMoveListener = this.dragMoveListener.bind(this);
+    (window as any).dragUnit= this.unit;
+  }
+
+  public assignSubjects() {
+    this.resizeEnd$ = new Subject<void>();
+    this.rangeChange$ = new BehaviorSubject<number>(this.model.range);
+    this.startChange$ = new BehaviorSubject<number>(this.model.start);
+  }
+
+  public assignObservables() {
+    this.sizeChange$ = combineLatest([
+      this.startChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)),
+      this.rangeChange$.pipe(distinctUntilChanged(),map((el)=> el / this.unit)), 
+    ])
+  }
+
+  public assignSubscriptions() {
+    this.forbiddenIndexesSub = this.forbiddenIndexes$.subscribe((forbiddenIndexes: number[][]) => {
+      this.forbiddenIndexes = forbiddenIndexes;
+      this.closestRight = this.getClosestRight(this.forbiddenIndexes?.map(el => el[0]), (this.start + this.range)/this.unit);
+      this.closestLeft = this.getClosestLeft(this.forbiddenIndexes?.map(el => el[0] + el[1]), (this.start)/this.unit);
+      this.cdRef.detectChanges();
+    })
+
+    this.rangeChangeSub = this.rangeChange$.subscribe((width: number)=> {
+      this.range = Math.round(width / this.unit) * this.unit
+      this.el.nativeElement.style.width = width + 'px';
+    })
+  
+
+    this.startChangeSub = this.startChange$.subscribe((left: number)=> {
+      this.start = Math.round(left / this.unit) * this.unit
+      this.el.nativeElement.style.left = left + 'px';
+    })
+  }
+
+  public resolveSubscriptions() {
+    this.startChangeSub && this.startChangeSub.unsubscribe();
+    this.rangeChangeSub && this.rangeChangeSub.unsubscribe();
+    this.sizeChangeSub && this.sizeChangeSub.unsubscribe();
+  }
+
+  public assignInteractionEvents() {
+    interact(this.el.nativeElement)
+    .resizable({
+      edges: { top: false, left: true, bottom: false, right: true },
+      axis: 'x',
+      listeners: {
+        move: function (event) {
+
+          const unit = (window as any).dragUnit
+          let { x, y } = event.target.dataset
+          x = (parseFloat(x) || 0) + event.deltaRect.left
+          y = (parseFloat(y) || 0) + event.deltaRect.top
+          
+          if (this.isLeftEdge(event)) {
+            if (this.isResizeTowardsLeft(event)) {
+             if (this.isCursorLeftFromLeftEdge(event)) {
+               if(this.isInsideLeftEdgeOfContainer(x)) {
+                if(this.isMoreThanEdgeLeft(event)) {
+                 this.handlePositiveResizeTowardsLeft(event, unit)
+                }
+                }
+              }
+            }
+            
+            if (this.isMovedByUnit(event, unit)) {
+              if (this.isBeingResizedBelowUnit(event, unit)) {
+                return;
+              }
+
+              if (this.isResizeTowardsRight(event)) {
+                this.handleNegativeResizeTowardsRight(event, unit)
+              }
+            }
+          Object.assign(event.target.dataset, { x: event.target.offsetLeft, y })
+
+          return;
+          
+        }
+
+        if(this.isRightEdge(event)) {
+          if (this.isResizeTowardsLeft(event)) {
+            if (this.isCursorLeftFromRightEdge(event)) {
+  
+                if (this.isBeingResizedBelowUnit(event, unit)) {
+                  return;
+                }
+                this.handleNegativeResizeTowardsLeft(event, unit)
+              }
+              
+            }
+          }
+
+          if (this.isResizeTowardsRight(event)) {
+            if (this.isCursorRightFromRightEdge(event)) {
+              if (this.isLessThanEdgeRight(event)) {
+                if (this.isBeingResizedOverParentWidth(event, unit)) {
+                  return;
+                }
+                  this.handlePositiveResizeTowardsRight(event, unit)
+              }
+          }
+        }
+        this.assignDatasetValues(event, x,y)
+ 
+        }.bind(this)
+         
+      },
+      // modifiers: [
+      //   interact.modifiers.snapSize({
+      //     targets: [
+      //       { width: this.unit },
+      //       interact.snappers.grid({ width: this.unit, height: this.unit }),
+      //     ],
+      //   }),
+      // ],
+    })
+
+    .on(['resizeend'], (event) => {
+      this.model = {...this.model, range: this.el.nativeElement.clientWidth}
+    })
+    .draggable({
+      listeners: { move: (window as any).dragMoveListener },
+      // inertia: true,
+    })
+    .on('dragstart', (event) => {
+
+      
+      const element = event.target;
+      element.dataset.model = this.model;
+      element.dataset.originalLeft = this.el.nativeElement.offsetLeft;
+      this.el.nativeElement.classList.add('top');
+      this.freeSpace.emit(this.model);
+      (window as any).dragData = this.model;
+    })
+    .on('resizeend', (event) => {
+      this.resizeEnd$.next()
+    });
+  }
 }
 

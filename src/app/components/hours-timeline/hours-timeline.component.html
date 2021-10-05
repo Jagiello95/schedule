@@ -2,7 +2,7 @@
   <div 
   *ngIf="axis === 'x'" 
   class="y-units"
-  [style.height.rem]="5" 
+  [style.height.rem]="itemHeight"
   [style.width.px]="hours.length * unit">
     <div 
     *ngFor="let item of hours, let j = index"

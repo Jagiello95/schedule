@@ -1,9 +1,8 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ContentChildren, ElementRef, HostBinding, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChildren, ElementRef, HostBinding, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
 import { ScheduleService } from 'src/app/schedule.service';
 import interact from 'interactjs';
 import { EventEmitter } from '@angular/core';
 import { ItemXComponent } from '../item-x/item-x.component';
-import { ItemYComponent } from '../item-y/item-y.component';
 import { filter, find, map , pairwise, startWith, switchMap, take, tap} from 'rxjs/operators';
 import { combineLatest, Observable, of, Subject, Subscription, iif, from} from 'rxjs';
 
@@ -14,11 +13,8 @@ import { combineLatest, Observable, of, Subject, Subscription, iif, from} from '
 })
 export class ItemListComponent implements OnInit, AfterViewInit {
   @ViewChildren(ItemXComponent) items: QueryList<ItemXComponent>
-  // @ContentChildren(ItemComponent) citems: QueryList<ItemComponent>
   @Input() day: number;
-
-  @Input()
-  options: any
+  @Input() options: any
   @Input() axis;
   @Input() unit;
   @Input() id;
@@ -36,6 +32,7 @@ export class ItemListComponent implements OnInit, AfterViewInit {
   public resizeSub: Subscription;
   public creatingHeight = null;
   public isCreating = false;
+  public itemHeight = this.service.itemHeight;
   @Output()
   dropping: EventEmitter<any> = new EventEmitter();
 
@@ -55,7 +52,6 @@ export class ItemListComponent implements OnInit, AfterViewInit {
     // .on('dragleave', event => {
     // })
     .on('drop', event => {
-      console.log(ItemXComponent.counter)
       if (ItemXComponent.counter < 4000) {
         event.relatedTarget.classList.add('animated');
       }
@@ -74,9 +70,6 @@ export class ItemListComponent implements OnInit, AfterViewInit {
         start: Math.round(event.relatedTarget.offsetLeft / this.unit),
         end: Math.round((event.relatedTarget.offsetLeft + event.relatedTarget.clientWidth) / this.unit)
       }
-
-      console.log((window as any).dragData.start, (window as any).dragData.range, event.relatedTarget.offsetLeft , event.relatedTarget.offsetLeft + event.relatedTarget.clientWidth)
-      
       // console.log(JSON.parse(event.relatedTarget.dataset.model).current)
       from(this.allowedUnits).pipe(
         find((el)=> (rounded.start >= el[0] && rounded.end <= el[0] + el[1])),

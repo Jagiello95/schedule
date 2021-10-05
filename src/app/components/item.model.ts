@@ -5,5 +5,4 @@ export interface DragModel {
   range: number,
   index: number,
   id: string
-
 }
